@@ -1,27 +1,45 @@
 
 use std::sync::Arc;
 
-use vulkano::buffer::{Buffer, BufferCreateInfo, BufferUsage};
-use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
-use vulkano::device::{
-    Device, DeviceCreateInfo, DeviceExtensions, QueueCreateInfo, QueueFlags, Features,
+use vulkano::VulkanLibrary;
+use vulkano::buffer::{
+    Buffer, BufferCreateInfo, BufferUsage
 };
-use vulkano::image::{ImageUsage};
-use vulkano::instance::{Instance, InstanceCreateInfo};
-use vulkano::memory::allocator::{AllocationCreateInfo, MemoryUsage, StandardMemoryAllocator};
-use vulkano::pipeline::graphics::viewport::{Viewport};
+use vulkano::device::physical::{
+    PhysicalDevice, PhysicalDeviceType, RayTracingInvocationReorderMode
+};
+use vulkano::device::{
+    Device, DeviceCreateInfo, DeviceExtensions, 
+    QueueCreateInfo, QueueFlags, 
+    Features,
+};
+use vulkano::image::ImageUsage;
+use vulkano::instance::{
+    Instance, InstanceCreateInfo
+};
+use vulkano::memory::allocator::{
+    AllocationCreateInfo, MemoryUsage, StandardMemoryAllocator
+};
+use vulkano::pipeline::graphics::viewport::Viewport;
 use vulkano::swapchain::{
     self, AcquireError, Surface, Swapchain, SwapchainCreateInfo, SwapchainCreationError,
     SwapchainPresentInfo,
 };
 use vulkano::sync::future::FenceSignalFuture;
-use vulkano::sync::{self, FlushError, GpuFuture};
-
+use vulkano::sync::{
+    self, FlushError, GpuFuture
+};
 use vulkano_win::VkSurfaceBuild;
 
-use winit::event::{Event, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::{Window, WindowBuilder};
+use winit::event::{
+    Event, WindowEvent
+};
+use winit::event_loop::{
+    ControlFlow, EventLoop
+};
+use winit::window::{
+    Window, WindowBuilder
+};
 
 use crate::render_passes::{
     render_pass_test,
@@ -35,8 +53,7 @@ pub fn select_physical_device(
     device_extensions: &DeviceExtensions,
 ) -> (Arc<PhysicalDevice>, u32) {
     instance
-        .enumerate_physical_devices()
-        .expect("failed to enumerate physical devices")
+        .enumerate_physical_devices().expect("failed to enumerate physical devices")
         .filter(|p| p.supported_extensions().contains(device_extensions))
         .filter_map(|p| {
             p.queue_family_properties()
@@ -54,24 +71,16 @@ pub fn select_physical_device(
             PhysicalDeviceType::VirtualGpu => 2,
             PhysicalDeviceType::Cpu => 3,
             _ => 4,
-        })
-        .expect("no device available")
+        }).expect("no device available")
 }
 
 pub fn test_vulkano() {
-    let library = vulkano::VulkanLibrary::new().expect("no local Vulkan library/DLL");
-    let features = Features {
-        tessellation_shader : true,
-        geometry_shader : true,
-        ray_tracing_pipeline : true,
-        ..Default::default()
-    };
-
-    let required_extensions = vulkano_win::required_extensions(&library);
+    let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
+    let required_instance_extensions = vulkano_win::required_extensions(&library);
     let instance = Instance::new(
         library,
         InstanceCreateInfo {
-            enabled_extensions: required_extensions,
+            enabled_extensions: required_instance_extensions,
             ..Default::default()
         },
     )
@@ -83,33 +92,38 @@ pub fn test_vulkano() {
         .unwrap();
 
     let window = surface
-        .object()
-        .unwrap()
+        .object().unwrap()
         .clone()
-        .downcast::<Window>()
-        .unwrap();
+        .downcast::<Window>().unwrap();
 
     let device_extensions = DeviceExtensions {
         khr_swapchain: true,
         ..DeviceExtensions::empty()
     };
 
-    let (physical_device, queue_family_index) =
-        select_physical_device(&instance, &surface, &device_extensions);
+    let (physical_device, queue_family_index) = select_physical_device(&instance, &surface, &device_extensions);
+
+    let features = Features {
+        tessellation_shader : true,
+        geometry_shader : true,
+        ray_tracing_pipeline : true,
+        ..Default::default()
+    };
 
     let (device, mut queues) = Device::new(
         physical_device.clone(),
         DeviceCreateInfo {
-            queue_create_infos: vec![QueueCreateInfo {
-                queue_family_index,
-                ..Default::default()
-            }],
-            enabled_extensions: device_extensions, // new
+            queue_create_infos: vec![
+                QueueCreateInfo {
+                    queue_family_index,
+                    ..Default::default()
+                }
+            ],
+            enabled_extensions: device_extensions,
             enabled_features : features,
             ..Default::default()
         },
-    )
-    .expect("failed to create device");
+    ).expect("failed to create device");
 
     let queue = queues.next().unwrap();
 
@@ -119,7 +133,10 @@ pub fn test_vulkano() {
             .expect("failed to get surface capabilities");
 
         let dimensions = window.inner_size();
-        let composite_alpha = caps.supported_composite_alpha.into_iter().next().unwrap();
+        let composite_alpha = caps.supported_composite_alpha
+            .into_iter()
+            .next()
+            .unwrap();
         let image_format = Some(
             physical_device
                 .surface_formats(&surface, Default::default())
@@ -150,7 +167,7 @@ pub fn test_vulkano() {
         gp_test::Vert {position: [0.5, -0.25]}
     ];
 
-    let vertex_buffer = Buffer::from_iter(
+    let vb = Buffer::from_iter(
         &memory_allocator,
         BufferCreateInfo {
             usage: BufferUsage::VERTEX_BUFFER,
@@ -161,10 +178,9 @@ pub fn test_vulkano() {
             ..Default::default()
         },
         vertices.into_iter(),
-    )
-    .unwrap();
+    ).unwrap();
 
-    let viewport = Viewport {
+    let mut viewport = Viewport {
         origin: [0.0, 0.0],
         dimensions: window.inner_size().into(),
         depth_range: 0.0..1.0,
@@ -173,7 +189,7 @@ pub fn test_vulkano() {
     let mut command_buffers = render_pass_test::create_command_buffers(
         &device, 
         &queue, 
-        &vertex_buffer, 
+        &vb, 
         &swapchain, 
         &viewport, 
         &images);
@@ -217,10 +233,16 @@ pub fn test_vulkano() {
                 if window_resized {
                     window_resized = false;
 
+                    viewport = Viewport {
+                        origin: [0.0, 0.0],
+                        dimensions: window.inner_size().into(),
+                        depth_range: 0.0..1.0,
+                    };
+
                     command_buffers = render_pass_test::create_command_buffers(
                         &device, 
                         &queue, 
-                        &vertex_buffer, 
+                        &vb, 
                         &swapchain, 
                         &viewport, 
                         &new_images);
@@ -260,8 +282,10 @@ pub fn test_vulkano() {
 
             let future = previous_future
                 .join(acquire_future)
-                .then_execute(queue.clone(), command_buffers[image_i as usize].clone())
-                .unwrap()
+                .then_execute(
+                    queue.clone(), 
+                    command_buffers[image_i as usize].clone()
+                ).unwrap()
                 .then_swapchain_present(
                     queue.clone(),
                     SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_i),

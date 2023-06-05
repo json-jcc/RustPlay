@@ -6,13 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.5.5"
-
+rand = { version = "0.5.5" }
 vulkano = { version = "0.33.0" }
 vulkano-shaders = { version = "0.33.0" }
-vulkano-macros = "0.33.0"
-vulkano-util = "0.33.0"
-vulkano-win = "0.33.0"
-winit = "0.28.3"
-
+vulkano-macros = { verison = "0.33.0" }
+vulkano-util = { version = "0.33.0" }
+vulkano-win = { version = "0.33.0" }
+winit = { version = "0.28.3" }
+gltf = { version = "1.1.0", features = ["extras", "names"] }
 mlua = { version = "0.8", features = ["lua54", "vendored"] }
+tokio = { version = "1.28.2", features = ["full"] }
