@@ -17,10 +17,16 @@ use vulkano::{
             },
             input_assembly::{
                 InputAssemblyState
+            }, 
+            multisample::MultisampleState,
+            rasterization::{ 
+                RasterizationState,
+                PolygonMode,
             },
+            depth_stencil::DepthStencilState,
         }, 
         GraphicsPipeline
-    }
+    }, image::SampleCount
 };
 
 use vulkano::pipeline::graphics::vertex_input::Vertex;
@@ -82,14 +88,26 @@ pub fn create(
     let fs = fs::load(device.clone()).expect("failed to create shader module");
 
     GraphicsPipeline::start()
+        .render_pass(Subpass::from(render_pass, 0).unwrap())
         .input_assembly_state(InputAssemblyState::new())
         .vertex_input_state(Vert::per_vertex())
         .vertex_shader(vs.entry_point("main").unwrap(), ())
         //.tessellation_shaders(tesc.entry_point("main").unwrap(), (), tese.entry_point("main").unwrap(), ())
         //.geometry_shader(gs.entry_point("main").unwrap(), ())
         .viewport_state(ViewportState::viewport_fixed_scissor_irrelevant([viewport]))
+        .rasterization_state(RasterizationState {
+            polygon_mode: PolygonMode::Fill,
+            ..Default::default()
+        })        
         .fragment_shader(fs.entry_point("main").unwrap(), ())
-        .render_pass(Subpass::from(render_pass, 0).unwrap())
+        //.color_blend_state(color_blend_state)
+        .depth_stencil_state(DepthStencilState::simple_depth_test())
+        //.discard_rectangle_state(discard_rectangle_state)
+        .multisample_state(MultisampleState { 
+            rasterization_samples: SampleCount::Sample1,
+            ..Default::default() 
+        })
         .build(device.clone())
+        //.build_with_cache(pipeline_cache)
         .unwrap()
 }

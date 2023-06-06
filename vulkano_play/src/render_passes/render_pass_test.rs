@@ -94,8 +94,8 @@ fn build_pcb(
             },
             SubpassContents::Inline,
         ).unwrap()
-        .bind_index_buffer(index_buffer)
-        .bind_descriptor_sets(pipeline_bind_point, pipeline_layout, first_set, descriptor_sets)
+        //.bind_index_buffer(index_buffer)
+        //.bind_descriptor_sets(pipeline_bind_point, pipeline_layout, first_set, descriptor_sets)
         .bind_pipeline_graphics(pipeline.clone())
         .bind_vertex_buffers(0, vertex_buffer.clone())
         .draw(vertex_buffer.len() as u32, 1, 0, 0).unwrap()
