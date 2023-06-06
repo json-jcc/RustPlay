@@ -6,7 +6,7 @@ use vulkano::buffer::{
     Buffer, BufferCreateInfo, BufferUsage
 };
 use vulkano::device::physical::{
-    PhysicalDevice, PhysicalDeviceType, RayTracingInvocationReorderMode
+    PhysicalDevice, PhysicalDeviceType
 };
 use vulkano::device::{
     Device, DeviceCreateInfo, DeviceExtensions, 
@@ -41,11 +41,13 @@ use winit::window::{
     Window, WindowBuilder
 };
 
+use crate::render_passes::pipelines::cp_test;
 use crate::render_passes::{
-    render_pass_test,
+    rp_test,
     pipelines::gp_test, 
 };
 
+use image::{ImageBuffer, Rgba};
 
 pub fn select_physical_device(
     instance: &Arc<Instance>,
@@ -167,7 +169,7 @@ pub fn test_vulkano() {
         gp_test::Vert {position: [0.5, -0.25]}
     ];
 
-    let vb = Buffer::from_iter(
+    let vbo = Buffer::from_iter(
         &memory_allocator,
         BufferCreateInfo {
             usage: BufferUsage::VERTEX_BUFFER,
@@ -180,26 +182,67 @@ pub fn test_vulkano() {
         vertices.into_iter(),
     ).unwrap();
 
+    let ebo = Buffer::from_iter(
+        &memory_allocator,
+        BufferCreateInfo {
+            usage: BufferUsage::INDEX_BUFFER,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            usage: MemoryUsage::Upload,
+            ..Default::default()
+        },
+        vec![0u32, 1, 2].into_iter(),
+    ).unwrap();
+
     let mut viewport = Viewport {
         origin: [0.0, 0.0],
         dimensions: window.inner_size().into(),
         depth_range: 0.0..1.0,
     };
 
-    let mut command_buffers = render_pass_test::create_command_buffers(
+    let rp_test = Arc::new(rp_test::RenderPassTest::new(
         &device, 
-        &queue, 
-        &vb, 
         &swapchain, 
-        &viewport, 
-        &images);
+        &viewport
+    ));
+
+    let mut cbs = rp_test.create_command_buffers(
+        &queue, 
+        &vbo, &ebo, 
+        &images
+    );
+
+    let buf = Buffer::from_iter(
+        &memory_allocator,
+        BufferCreateInfo {
+            usage: BufferUsage::TRANSFER_DST,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            usage: MemoryUsage::Download,
+            ..Default::default()
+        },
+        (0..1024 * 1024 * 4).map(|_| 0u8),
+    ).expect("failed to create buffer");
+
+    let cp_test_pcb = cp_test::create_pcb(&device, &queue, &buf);
+    let cp_test_future = sync::now(device.clone())
+        .then_execute(queue.clone(), cp_test_pcb.clone()).unwrap()
+        .then_signal_fence_and_flush().unwrap();
+
+    cp_test_future.wait(None).unwrap();
+
+    let buffer_content = buf.read().unwrap();
+    let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
+    image.save("image.png").unwrap();
 
     let mut window_resized = false;
     let mut recreate_swapchain = false;
 
     let frames_in_flight = images.len();
     let mut fences: Vec<Option<Arc<FenceSignalFuture<_>>>> = vec![None; frames_in_flight];
-    let mut previous_fence_i = 0;
+    let mut pre_fence_idx = 0;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
@@ -239,17 +282,15 @@ pub fn test_vulkano() {
                         depth_range: 0.0..1.0,
                     };
 
-                    command_buffers = render_pass_test::create_command_buffers(
-                        &device, 
+                    cbs = rp_test.create_command_buffers(
                         &queue, 
-                        &vb, 
-                        &swapchain, 
-                        &viewport, 
+                        &vbo, 
+                        &ebo, 
                         &new_images);
                 }
             }
 
-            let (image_i, suboptimal, acquire_future) =
+            let (img_idx, suboptimal, acquire_future) =
                 match swapchain::acquire_next_image(swapchain.clone(), None) {
                     Ok(r) => r,
                     Err(AcquireError::OutOfDate) => {
@@ -264,11 +305,11 @@ pub fn test_vulkano() {
             }
 
             // wait for the fence related to this image to finish (normally this would be the oldest fence)
-            if let Some(image_fence) = &fences[image_i as usize] {
+            if let Some(image_fence) = &fences[img_idx as usize] {
                 image_fence.wait(None).unwrap();
             }
 
-            let previous_future = match fences[previous_fence_i as usize].clone() {
+            let previous_future = match fences[pre_fence_idx as usize].clone() {
                 // Create a NowFuture
                 None => {
                     let mut now = sync::now(device.clone());
@@ -284,15 +325,15 @@ pub fn test_vulkano() {
                 .join(acquire_future)
                 .then_execute(
                     queue.clone(), 
-                    command_buffers[image_i as usize].clone()
+                    cbs[img_idx as usize].clone()
                 ).unwrap()
                 .then_swapchain_present(
                     queue.clone(),
-                    SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_i),
+                    SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), img_idx),
                 )
                 .then_signal_fence_and_flush();
 
-            fences[image_i as usize] = match future {
+            fences[img_idx as usize] = match future {
                 Ok(value) => Some(Arc::new(value)),
                 Err(FlushError::OutOfDate) => {
                     recreate_swapchain = true;
@@ -304,7 +345,7 @@ pub fn test_vulkano() {
                 }
             };
 
-            previous_fence_i = image_i;
+            pre_fence_idx = img_idx;
         }
         _ => (),
     });
