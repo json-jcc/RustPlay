@@ -48,6 +48,7 @@ use winit::window::{
     Window, WindowBuilder
 };
 
+use crate::render_passes::rg::PassGraph;
 use crate::render_passes::{
     rp_test,
     pipelines::{
@@ -170,6 +171,9 @@ pub fn test_vulkano() {
         .unwrap()
     };
 
+    let mut graph = PassGraph::new(&device, &queue);
+
+
     let mem_alloc = StandardMemoryAllocator::new_default(device.clone());
 
     let vertices = vec![
@@ -235,23 +239,28 @@ pub fn test_vulkano() {
         (0..1024 * 1024 * 4).map(|_| 0u8),
     ).expect("failed to create buffer");
 
-    let cb_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
-    let mut cb_builder = AutoCommandBufferBuilder::primary(
-        &cb_allocator,
-        queue.queue_family_index(),
-        CommandBufferUsage::OneTimeSubmit,
-    ).unwrap();
+    // let cb_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
+    // let mut cb_builder = AutoCommandBufferBuilder::primary(
+    //     &cb_allocator,
+    //     queue.queue_family_index(),
+    //     CommandBufferUsage::OneTimeSubmit,
+    // ).unwrap();
 
-    //let cp_test_pcb = cp_test::create_pcb(&device, &queue, &buf);
-    cp_test::record(&device, &queue, &buf, &mut cb_builder);
-    cp_test::record(&device, &queue, &buf, &mut cb_builder);
-    let cp_test_pcb = Arc::new(cb_builder.build().unwrap());
+    // cp_test::record(&device, &queue, &buf, &mut cb_builder);
+    // let cp_test_pcb = Arc::new(cb_builder.build().unwrap());
 
-    let cp_test_future = sync::now(device.clone())
-        .then_execute(queue.clone(), cp_test_pcb.clone()).unwrap()
-        .then_signal_fence_and_flush().unwrap();
+    cp_test::build(&mut graph, &buf);
+    
+    graph.setup();
+    graph.compile();
+    graph.execute();
 
-    cp_test_future.wait(None).unwrap();
+
+    // let cp_test_future = sync::now(device.clone())
+    //     .then_execute(queue.clone(), cp_test_pcb.clone()).unwrap()
+    //     .then_signal_fence_and_flush().unwrap();
+
+    //cp_test_future.wait(None).unwrap();
 
     let buffer_content = buf.read().unwrap();
     let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();

@@ -36,6 +36,8 @@ use vulkano::command_buffer::{
     SubpassContents, SecondaryAutoCommandBuffer,
 };
 
+use crate::render_passes::rg::PassGraph;
+
 mod cs {
     vulkano_shaders::shader! {
         ty: "compute",
@@ -130,6 +132,29 @@ pub fn record(
         .copy_image_to_buffer(
             CopyImageToBufferInfo::image_buffer(resources.image, resources.buffer)
         ).unwrap();
+}
+
+pub fn build(graph: &mut PassGraph, buf: &Subbuffer<[u8]>) {
+    
+    graph.add_pass(
+        |device, queue, pcb_builder| {
+        
+        let resources = ResourcesTest::new(device, queue, buf);
+        
+        pcb_builder
+            .bind_pipeline_compute(resources.pipeline.clone())
+            .bind_descriptor_sets(
+                PipelineBindPoint::Compute,
+                resources.pipeline.layout().clone(),
+                0,
+                resources.ds,
+            )
+            .dispatch([1024 / 16, 1024 / 16, 1]).unwrap()
+            .copy_image_to_buffer(
+                CopyImageToBufferInfo::image_buffer(resources.image, resources.buffer)
+            ).unwrap();
+        }
+    );
 }
 
 
