@@ -1607,10 +1607,13 @@ dependencies = [
 name = "vulkano_play"
 version = "0.1.0"
 dependencies = [
+ "ash",
  "gltf",
  "image",
  "mlua",
+ "quote",
  "rand",
+ "syn 1.0.109",
  "tokio",
  "vulkano",
  "vulkano-macros",

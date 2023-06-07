@@ -38,6 +38,37 @@ use vulkano::buffer::{
 
 use crate::render_passes::pipelines::gp_test;
 
+
+pub trait Pass {
+    fn join(&mut self, graph: &mut PassGraph);
+    fn compile(&mut self);
+    fn execute(&mut self);
+}
+
+pub struct PassGraph{
+    passes: Vec<Arc<dyn Pass>>
+}
+
+pub struct PassPrerequisites {
+
+}
+
+impl PassGraph {
+    pub fn compile() {
+
+    }
+
+    pub fn execute() {
+
+    }
+
+    pub fn add<F>(&mut self, f : F) -> i32
+        where F: Fn() -> i32 {
+
+            f()
+    }
+}
+
 pub struct RenderPassTest {
 
     device: Arc<Device>,
@@ -45,6 +76,20 @@ pub struct RenderPassTest {
     
     pipeline: Arc<GraphicsPipeline>,
     descriptor_sets: Vec<Arc<PersistentDescriptorSet>>
+}
+
+impl Pass for RenderPassTest {
+    fn join(&mut self, graph: &mut PassGraph) {
+        graph.add(||{1i32});
+    }
+
+    fn compile(&mut self) {
+
+    }
+
+    fn execute(&mut self) {
+
+    }
 }
 
 impl RenderPassTest {
@@ -167,6 +212,7 @@ impl RenderPassTest {
             },
             data_iter,
         ).expect("failed to create buffer");
+
         
         //let sampler = Sampler::simple_repeat_linear(device.clone());
         PersistentDescriptorSet::new(

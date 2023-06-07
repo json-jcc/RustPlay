@@ -4,5 +4,4 @@ layout(triangles, equal_spacing, ccw) in;
 
 void main(void)
 {
-	
 }
