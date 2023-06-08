@@ -16,27 +16,19 @@ use vulkano::{
         allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet
     }, 
     memory::allocator::{
-        StandardMemoryAllocator, AllocationCreateInfo, MemoryUsage
+        StandardMemoryAllocator
     }, 
     buffer::{
-        Buffer, 
-        BufferCreateInfo, 
-        BufferUsage, 
         Subbuffer
     }, 
     format::Format, command_buffer::CopyImageToBufferInfo
 };
 
-use vulkano::command_buffer::allocator::{
-    StandardCommandBufferAllocator,
-    StandardCommandBufferAllocatorCreateInfo
-};
 use vulkano::command_buffer::{
-    AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer,
-    SubpassContents, SecondaryAutoCommandBuffer,
+    AutoCommandBufferBuilder, PrimaryAutoCommandBuffer,
 };
 
-use crate::render_passes::rg::PassGraph;
+use crate::render_passes::graph::PassGraph;
 
 mod cs {
     vulkano_shaders::shader! {
@@ -59,7 +51,6 @@ pub fn create(
     ).expect("failed to create compute pipeline")
 }
 
-
 struct ResourcesTest {
 
     buffer : Subbuffer<[u8]>,
@@ -74,7 +65,7 @@ impl ResourcesTest{
     pub fn new(
         device: &Arc<Device>, 
         queue: &Arc<Queue>, 
-        buf: &Subbuffer<[u8]>
+        buf: Subbuffer<[u8]>
     ) ->Self {
         let mem_allocator = StandardMemoryAllocator::new_default(device.clone());
         let image: Arc<StorageImage> = StorageImage::new(
@@ -112,34 +103,13 @@ impl ResourcesTest{
     }
 }
 
-pub fn record(
-    device: &Arc<Device>, 
-    queue: &Arc<Queue>, 
-    buf: &Subbuffer<[u8]>,
-    pcb_builder: &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>
-) {
-    let resources = ResourcesTest::new(device, queue, buf);
 
-    pcb_builder
-        .bind_pipeline_compute(resources.pipeline.clone())
-        .bind_descriptor_sets(
-            PipelineBindPoint::Compute,
-            resources.pipeline.layout().clone(),
-            0,
-            resources.ds,
-        )
-        .dispatch([1024 / 16, 1024 / 16, 1]).unwrap()
-        .copy_image_to_buffer(
-            CopyImageToBufferInfo::image_buffer(resources.image, resources.buffer)
-        ).unwrap();
-}
+pub fn build(graph: &mut PassGraph, buf: Subbuffer<[u8]>) {
 
-pub fn build(graph: &mut PassGraph, buf: &Subbuffer<[u8]>) {
-    
-    graph.add_pass(
-        |device, queue, pcb_builder| {
+    graph.add_pass(Box::new(
+        move |queue: &Arc<Queue>, pcb_builder: &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>| {
         
-        let resources = ResourcesTest::new(device, queue, buf);
+        let resources = ResourcesTest::new(queue.device(), queue, buf.clone());
         
         pcb_builder
             .bind_pipeline_compute(resources.pipeline.clone())
@@ -154,7 +124,7 @@ pub fn build(graph: &mut PassGraph, buf: &Subbuffer<[u8]>) {
                 CopyImageToBufferInfo::image_buffer(resources.image, resources.buffer)
             ).unwrap();
         }
-    );
+    ));
 }
 
 

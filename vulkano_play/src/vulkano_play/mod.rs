@@ -1,14 +1,10 @@
 
 use std::sync::Arc;
-
+use std::any::Any;
 use vulkano::VulkanLibrary;
 use vulkano::buffer::{
     Buffer, BufferCreateInfo, BufferUsage
 };
-use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, CopyImageToBufferInfo};
-use vulkano::command_buffer::allocator::StandardCommandBufferAllocator;
-use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
-use vulkano::descriptor_set::allocator::StandardDescriptorSetAllocator;
 use vulkano::device::physical::{
     PhysicalDevice, PhysicalDeviceType
 };
@@ -17,16 +13,13 @@ use vulkano::device::{
     QueueCreateInfo, QueueFlags, 
     Features,
 };
-use vulkano::format::Format;
-use vulkano::image::view::ImageView;
-use vulkano::image::{ImageUsage, StorageImage, ImageDimensions};
+use vulkano::image::{ImageUsage};
 use vulkano::instance::{
     Instance, InstanceCreateInfo
 };
 use vulkano::memory::allocator::{
     AllocationCreateInfo, MemoryUsage, StandardMemoryAllocator
 };
-use vulkano::pipeline::{ComputePipeline, Pipeline, PipelineBindPoint};
 use vulkano::pipeline::graphics::viewport::Viewport;
 use vulkano::swapchain::{
     self, AcquireError, Surface, Swapchain, SwapchainCreateInfo, SwapchainCreationError,
@@ -48,12 +41,15 @@ use winit::window::{
     Window, WindowBuilder
 };
 
-use crate::render_passes::rg::PassGraph;
+use crate::render_passes::graph::PassGraph;
+use crate::render_passes::renderer_world::{
+    WorldRenderer,
+    MobileWorldRenderer
+};
 use crate::render_passes::{
     rp_test,
     pipelines::{
         gp_test,
-        cp_test
     } 
 };
 
@@ -137,8 +133,6 @@ pub fn test_vulkano() {
         },
     ).expect("failed to create device");
 
-    let queue = queues.next().unwrap();
-
     let (mut swapchain, images) = {
         let caps = physical_device
             .surface_capabilities(&surface, Default::default())
@@ -171,11 +165,18 @@ pub fn test_vulkano() {
         .unwrap()
     };
 
-    let mut graph = PassGraph::new(&device, &queue);
+    let queue = queues.next().unwrap();
 
+    let mut graph = PassGraph::new(&queue);
+    // let mut world_renderer = MobileWorldRenderer::new();
+    let mut wrdr: Box<dyn WorldRenderer> = Box::new(MobileWorldRenderer::new());
+    wrdr.render(&mut graph);
+    graph.execute();
 
+    //world_renderer.handle_fractal();
+    
     let mem_alloc = StandardMemoryAllocator::new_default(device.clone());
-
+    
     let vertices = vec![
         gp_test::Vert {position: [-0.5, -0.5]}, 
         gp_test::Vert {position: [0.0, 0.5]}, 
@@ -225,46 +226,6 @@ pub fn test_vulkano() {
         &vbo, &ebo, 
         &images
     );
-
-    let buf = Buffer::from_iter(
-        &mem_alloc,
-        BufferCreateInfo {
-            usage: BufferUsage::TRANSFER_DST,
-            ..Default::default()
-        },
-        AllocationCreateInfo {
-            usage: MemoryUsage::Download,
-            ..Default::default()
-        },
-        (0..1024 * 1024 * 4).map(|_| 0u8),
-    ).expect("failed to create buffer");
-
-    // let cb_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
-    // let mut cb_builder = AutoCommandBufferBuilder::primary(
-    //     &cb_allocator,
-    //     queue.queue_family_index(),
-    //     CommandBufferUsage::OneTimeSubmit,
-    // ).unwrap();
-
-    // cp_test::record(&device, &queue, &buf, &mut cb_builder);
-    // let cp_test_pcb = Arc::new(cb_builder.build().unwrap());
-
-    cp_test::build(&mut graph, &buf);
-    
-    graph.setup();
-    graph.compile();
-    graph.execute();
-
-
-    // let cp_test_future = sync::now(device.clone())
-    //     .then_execute(queue.clone(), cp_test_pcb.clone()).unwrap()
-    //     .then_signal_fence_and_flush().unwrap();
-
-    //cp_test_future.wait(None).unwrap();
-
-    let buffer_content = buf.read().unwrap();
-    let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
-    image.save("image.png").unwrap();
 
     let mut window_resized = false;
     let mut recreate_swapchain = false;
@@ -319,6 +280,8 @@ pub fn test_vulkano() {
                 }
             }
 
+            
+
             let (img_idx, suboptimal, acquire_future) =
                 match swapchain::acquire_next_image(swapchain.clone(), None) {
                     Ok(r) => r,
@@ -355,6 +318,7 @@ pub fn test_vulkano() {
                 .then_execute(
                     queue.clone(), 
                     cbs[img_idx as usize].clone()
+                    //cbs[0].clone()
                 ).unwrap()
                 .then_swapchain_present(
                     queue.clone(),
