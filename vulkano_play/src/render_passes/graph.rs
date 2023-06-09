@@ -7,9 +7,11 @@ use vulkano::command_buffer::{
 };
 
 
+type FnMutPass = dyn FnMut(&Arc<Queue>, &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>);
+
 pub struct Pass
 {
-    f: Box<dyn FnMut(&Arc<Queue>, &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>)>,
+    f: Box<FnMutPass>,
 }
 
 pub struct PassPrerequisites {
@@ -39,9 +41,9 @@ impl PassGraph {
         self.queue.device().clone()
     }
 
-    pub fn add_pass(&mut self, f: Box<dyn FnMut(&Arc<Queue>, &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>)>) {
+    pub fn add_pass(&mut self, f: Box<FnMutPass>) {
         self.passes.push(Pass {
-            f: f,
+            f
         });
     }
 
@@ -52,7 +54,9 @@ impl PassGraph {
     pub fn execute(&mut self) {
 
         let mut pcb_builder = AutoCommandBufferBuilder::primary(
-            &self.cb_allocator, self.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit,
+            &self.cb_allocator, 
+            self.queue.queue_family_index(), 
+            CommandBufferUsage::OneTimeSubmit,
         ).unwrap();
 
         for pass in self.passes.iter_mut() {

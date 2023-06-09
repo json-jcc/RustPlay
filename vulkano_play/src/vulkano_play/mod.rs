@@ -167,13 +167,12 @@ pub fn test_vulkano() {
 
     let queue = queues.next().unwrap();
 
-    let mut graph = PassGraph::new(&queue);
-    // let mut world_renderer = MobileWorldRenderer::new();
-    let mut wrdr: Box<dyn WorldRenderer> = Box::new(MobileWorldRenderer::new());
-    wrdr.render(&mut graph);
-    graph.execute();
+    // let mut graph = PassGraph::new(&queue);
+    // let mut mobile_wrdr = MobileWorldRenderer::new();
+    // mobile_wrdr.render(&mut graph);
+    // graph.execute();
 
-    //world_renderer.handle_fractal();
+    // mobile_wrdr.handle_fractal();
     
     let mem_alloc = StandardMemoryAllocator::new_default(device.clone());
     
@@ -230,23 +229,19 @@ pub fn test_vulkano() {
     let mut window_resized = false;
     let mut recreate_swapchain = false;
 
-    let frames_in_flight = images.len();
-    let mut fences: Vec<Option<Arc<FenceSignalFuture<_>>>> = vec![None; frames_in_flight];
-    let mut pre_fence_idx = 0;
+    // let frames_in_flight = images.len();
+    // let mut fences: Vec<Option<Arc<FenceSignalFuture<_>>>> = vec![None; frames_in_flight];
+    // let mut pre_fence_idx = 0;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
             event: WindowEvent::CloseRequested,
             ..
-        } => {
-            *control_flow = ControlFlow::Exit;
-        }
+        } => { *control_flow = ControlFlow::Exit;}
         Event::WindowEvent {
             event: WindowEvent::Resized(_),
             ..
-        } => {
-            window_resized = true;
-        }
+        } => { window_resized = true; }
         Event::MainEventsCleared => {
             if window_resized || recreate_swapchain {
                 recreate_swapchain = false;
@@ -272,73 +267,80 @@ pub fn test_vulkano() {
                         depth_range: 0.0..1.0,
                     };
 
-                    cbs = rp_test.create_command_buffers(
-                        &queue, 
-                        &vbo, 
-                        &ebo, 
-                        &new_images);
+                    // cbs = rp_test.create_command_buffers(
+                    //     &queue, 
+                    //     &vbo, 
+                    //     &ebo, 
+                    //     &new_images);
                 }
             }
-
             
+            let mut graph = PassGraph::new(&queue);
+            
+            let mut mobile_wrdr = MobileWorldRenderer::new(viewport);
+            mobile_wrdr.render(&mut graph);
+            
+            graph.execute();
+            
+            // mobile_wrdr.handle_fractal();
 
-            let (img_idx, suboptimal, acquire_future) =
-                match swapchain::acquire_next_image(swapchain.clone(), None) {
-                    Ok(r) => r,
-                    Err(AcquireError::OutOfDate) => {
-                        recreate_swapchain = true;
-                        return;
-                    }
-                    Err(e) => panic!("failed to acquire next image: {e}"),
-                };
+            // let (img_idx, suboptimal, acquire_future) =
+            //     match swapchain::acquire_next_image(swapchain.clone(), None) {
+            //         Ok(r) => r,
+            //         Err(AcquireError::OutOfDate) => {
+            //             recreate_swapchain = true;
+            //             return;
+            //         }
+            //         Err(e) => panic!("failed to acquire next image: {e}"),
+            //     };
 
-            if suboptimal {
-                recreate_swapchain = true;
-            }
+            // if suboptimal {
+            //     recreate_swapchain = true;
+            // }
 
-            // wait for the fence related to this image to finish (normally this would be the oldest fence)
-            if let Some(image_fence) = &fences[img_idx as usize] {
-                image_fence.wait(None).unwrap();
-            }
+            // // wait for the fence related to this image to finish (normally this would be the oldest fence)
+            // if let Some(image_fence) = &fences[img_idx as usize] {
+            //     image_fence.wait(None).unwrap();
+            // }
 
-            let previous_future = match fences[pre_fence_idx as usize].clone() {
-                // Create a NowFuture
-                None => {
-                    let mut now = sync::now(device.clone());
-                    now.cleanup_finished();
+            // let previous_future = match fences[pre_fence_idx as usize].clone() {
+            //     // Create a NowFuture
+            //     None => {
+            //         let mut now = sync::now(device.clone());
+            //         now.cleanup_finished();
 
-                    now.boxed()
-                }
-                // Use the existing FenceSignalFuture
-                Some(fence) => fence.boxed(),
-            };
+            //         now.boxed()
+            //     }
+            //     // Use the existing FenceSignalFuture
+            //     Some(fence) => fence.boxed(),
+            // };
 
-            let future = previous_future
-                .join(acquire_future)
-                .then_execute(
-                    queue.clone(), 
-                    cbs[img_idx as usize].clone()
-                    //cbs[0].clone()
-                ).unwrap()
-                .then_swapchain_present(
-                    queue.clone(),
-                    SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), img_idx),
-                )
-                .then_signal_fence_and_flush();
+            // let future = previous_future
+            //     .join(acquire_future)
+            //     .then_execute(
+            //         queue.clone(), 
+            //         cbs[img_idx as usize].clone()
+            //         //cbs[0].clone()
+            //     ).unwrap()
+            //     .then_swapchain_present(
+            //         queue.clone(),
+            //         SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), img_idx),
+            //     )
+            //     .then_signal_fence_and_flush();
 
-            fences[img_idx as usize] = match future {
-                Ok(value) => Some(Arc::new(value)),
-                Err(FlushError::OutOfDate) => {
-                    recreate_swapchain = true;
-                    None
-                }
-                Err(e) => {
-                    println!("failed to flush future: {e}");
-                    None
-                }
-            };
+            // fences[img_idx as usize] = match future {
+            //     Ok(value) => Some(Arc::new(value)),
+            //     Err(FlushError::OutOfDate) => {
+            //         recreate_swapchain = true;
+            //         None
+            //     }
+            //     Err(e) => {
+            //         println!("failed to flush future: {e}");
+            //         None
+            //     }
+            // };
 
-            pre_fence_idx = img_idx;
+            // pre_fence_idx = img_idx;
         }
         _ => (),
     });

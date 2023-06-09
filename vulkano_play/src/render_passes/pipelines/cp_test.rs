@@ -110,7 +110,7 @@ pub fn build(graph: &mut PassGraph, buf: Subbuffer<[u8]>) {
         move |queue: &Arc<Queue>, pcb_builder: &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>| {
         
         let resources = ResourcesTest::new(queue.device(), queue, buf.clone());
-        
+
         pcb_builder
             .bind_pipeline_compute(resources.pipeline.clone())
             .bind_descriptor_sets(
