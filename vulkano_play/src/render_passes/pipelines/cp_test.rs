@@ -28,7 +28,7 @@ use vulkano::command_buffer::{
     AutoCommandBufferBuilder, PrimaryAutoCommandBuffer,
 };
 
-use crate::render_passes::graph::PassGraph;
+use crate::render_passes::pass_graph::PassGraph;
 
 mod cs {
     vulkano_shaders::shader! {
@@ -51,13 +51,13 @@ pub fn create(
     ).expect("failed to create compute pipeline")
 }
 
-struct ResourcesTest {
+pub struct ResourcesTest {
 
-    buffer : Subbuffer<[u8]>,
-    image : Arc<StorageImage>,
-    image_view : Arc<ImageView<StorageImage>>,
-    ds: Arc<PersistentDescriptorSet>,
-    pipeline: Arc<ComputePipeline>,
+    pub buffer : Subbuffer<[u8]>,
+    pub image : Arc<StorageImage>,
+    pub image_view : Arc<ImageView<StorageImage>>,
+    pub ds: Arc<PersistentDescriptorSet>,
+    pub pipeline: Arc<ComputePipeline>,
 }
 
 impl ResourcesTest{
@@ -104,28 +104,28 @@ impl ResourcesTest{
 }
 
 
-pub fn build(graph: &mut PassGraph, buf: Subbuffer<[u8]>) {
+// pub fn build(graph: &mut PassGraph, buf: Subbuffer<[u8]>) {
+    
+//     let resources = ResourcesTest::new(queue.device(), queue, buf.clone());
 
-    graph.add_pass(Box::new(
-        move |queue: &Arc<Queue>, pcb_builder: &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>| {
-        
-        let resources = ResourcesTest::new(queue.device(), queue, buf.clone());
+//     graph.add_pass(Box::new(
+//         move |queue, pcb_builder| {
 
-        pcb_builder
-            .bind_pipeline_compute(resources.pipeline.clone())
-            .bind_descriptor_sets(
-                PipelineBindPoint::Compute,
-                resources.pipeline.layout().clone(),
-                0,
-                resources.ds,
-            )
-            .dispatch([1024 / 16, 1024 / 16, 1]).unwrap()
-            .copy_image_to_buffer(
-                CopyImageToBufferInfo::image_buffer(resources.image, resources.buffer)
-            ).unwrap();
-        }
-    ));
-}
+//         pcb_builder
+//             .bind_pipeline_compute(resources.pipeline.clone())
+//             .bind_descriptor_sets(
+//                 PipelineBindPoint::Compute,
+//                 resources.pipeline.layout().clone(),
+//                 0,
+//                 resources.ds,
+//             )
+//             .dispatch([1024 / 16, 1024 / 16, 1]).unwrap()
+//             .copy_image_to_buffer(
+//                 CopyImageToBufferInfo::image_buffer(resources.image, resources.buffer)
+//             ).unwrap();
+//         }
+//     ));
+// }
 
 
 

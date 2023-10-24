@@ -41,7 +41,7 @@ use winit::window::{
     Window, WindowBuilder
 };
 
-use crate::render_passes::graph::PassGraph;
+use crate::render_passes::pass_graph::PassGraph;
 use crate::render_passes::renderer_world::{
     WorldRenderer,
     MobileWorldRenderer
@@ -166,13 +166,6 @@ pub fn test_vulkano() {
     };
 
     let queue = queues.next().unwrap();
-
-    // let mut graph = PassGraph::new(&queue);
-    // let mut mobile_wrdr = MobileWorldRenderer::new();
-    // mobile_wrdr.render(&mut graph);
-    // graph.execute();
-
-    // mobile_wrdr.handle_fractal();
     
     let mem_alloc = StandardMemoryAllocator::new_default(device.clone());
     
@@ -233,7 +226,7 @@ pub fn test_vulkano() {
     // let mut fences: Vec<Option<Arc<FenceSignalFuture<_>>>> = vec![None; frames_in_flight];
     // let mut pre_fence_idx = 0;
 
-    event_loop.run(move |event, _, control_flow| match event {
+    event_loop.run(move |event: Event<'_, ()>, _, control_flow| match event {
         Event::WindowEvent {
             event: WindowEvent::CloseRequested,
             ..

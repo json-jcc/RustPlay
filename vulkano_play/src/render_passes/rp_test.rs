@@ -89,67 +89,7 @@ impl RenderPassTest {
             })
             .collect::<Vec<_>>()
     }
-    
-    
-    fn build_scb(
-        mut scb_builder: AutoCommandBufferBuilder<SecondaryAutoCommandBuffer>,
-        pipeline: &Arc<GraphicsPipeline>,
-        framebuffer: &Arc<Framebuffer>,
-        vertex_buffer: &Subbuffer<[gp_test::Vert]>,
-    ) -> Arc<SecondaryAutoCommandBuffer> {
-        scb_builder
-            .begin_render_pass(
-                RenderPassBeginInfo {
-                    clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
-                    ..RenderPassBeginInfo::framebuffer(framebuffer.clone())
-                },
-                SubpassContents::SecondaryCommandBuffers,
-            ).unwrap()
-            .bind_pipeline_graphics(pipeline.clone())
-            .bind_vertex_buffers(0, vertex_buffer.clone())
-            //.bind_index_buffer(index_buffer)
-            //.bind_descriptor_sets(pipeline_bind_point, pipeline_layout, first_set, descriptor_sets)
-            .draw(vertex_buffer.len() as u32, 1, 0, 0).unwrap()
-            // .next_subpass(SubpassContents::SecondaryCommandBuffers).unwrap()
-            // .bind_pipeline_graphics(pipeline.clone())
-            .end_render_pass().unwrap();
-    
-        Arc::new(scb_builder.build().unwrap())
-    }
-    
-    fn build_pcb_with_scb(
-        mut pcb_builder: AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>,
-        framebuffer: &Arc<Framebuffer>,
-    ) -> Arc<PrimaryAutoCommandBuffer> {
-    
-        // let mut scb_building_tasks: Vec<_> = Vec::new();
-    
-        // scb_building_tasks.push(std::thread::spawn(|| -> Arc<SecondaryAutoCommandBuffer>{ Arc::new(scb_builder.build().unwrap())))}));
-    
-        // let scbs = scb_building_tasks
-        //     .into_iter()
-        //     .map(|task| task.join().unwrap())
-        //     .collect::<Vec<_>>();
-    
-        pcb_builder
-            .begin_render_pass(
-                RenderPassBeginInfo {
-                    clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
-                    ..RenderPassBeginInfo::framebuffer(framebuffer.clone())
-                },
-                SubpassContents::Inline,
-            ).unwrap();
-    
-        // for scb in scbs {
-        //     pcb_builder
-        //         .execute_commands(scb.clone()).unwrap();
-        // }
-            
-        pcb_builder.end_render_pass().unwrap();
-    
-        Arc::new(pcb_builder.build().unwrap())
-    }
-    
+   
     fn create_descriptor_sets(device: &Arc<Device>, pipeline: &Arc<GraphicsPipeline>) -> Arc<PersistentDescriptorSet>{
         let descriptor_set_layouts = pipeline.layout().set_layouts();
 
@@ -233,17 +173,6 @@ impl RenderPassTest {
                 self.descriptor_sets.clone()
             )
             .draw(vbo.len() as u32, 1, 0, 0).unwrap()
-            
-            // .next_subpass(SubpassContents::Inline).unwrap()
-            // .bind_pipeline_graphics(self.pipeline.clone())
-            // .bind_vertex_buffers(0, vbo.clone())
-            // .bind_index_buffer(ebo.clone())
-            // .bind_descriptor_sets(
-            //     PipelineBindPoint::Graphics, 
-            //     self.pipeline.layout().clone(), 
-            //     0, 
-            //     self.descriptor_sets.clone()
-            // )
             .end_render_pass().unwrap();
     }
 

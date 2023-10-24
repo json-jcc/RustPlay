@@ -1,166 +1,124 @@
+use teloxide::{
+    prelude::*, 
+    utils::command::BotCommands, 
+    types::*, payloads::GetChat,
+};
 
-mod test;
+use reqwest::*;
 
-use std::rc::Rc;
-use std::sync::Arc;
+#[tokio::main]
+async fn main() {
+    pretty_env_logger::init();
+    log::info!("Starting command bot...");
 
+    let bot = Bot::from_env();
 
-use std::sync::mpsc;
-use std::thread;
+    let handler = Update::filter_inline_query().branch(dptree::endpoint(
+        |bot: Bot, q: InlineQuery| async move {
+            // First, create your actual response
+            let google_search = InlineQueryResultArticle::new(
+                // Each item needs a unique ID, as well as the response container for the
+                // items. These can be whatever, as long as they don't
+                // conflict.
+                "01".to_string(),
+                // What the user will actually see
+                "Google Search",
+                // What message will be sent when clicked/tapped
+                InputMessageContent::Text(InputMessageContentText::new(format!(
+                    "https://www.google.com/search?q={}",
+                    q.query,
+                ))),
+            );
+            // While constructing them from the struct itself is possible, it is preferred
+            // to use the builder pattern if you wish to add more
+            // information to your result. Please refer to the documentation
+            // for more detailed information about each field. https://docs.rs/teloxide/latest/teloxide/types/struct.InlineQueryResultArticle.html
+            let ddg_search = InlineQueryResultArticle::new(
+                "02".to_string(),
+                "DuckDuckGo Search".to_string(),
+                InputMessageContent::Text(InputMessageContentText::new(format!(
+                    "https://duckduckgo.com/?q={}",
+                    q.query
+                ))),
+            )
+            .description("DuckDuckGo Search")
+            .thumb_url("https://duckduckgo.com/assets/logo_header.v108.png".parse().unwrap())
+            .url("https://duckduckgo.com/about".parse().unwrap()); // Note: This is the url that will open if they click the thumbnail
 
-#[derive(Debug, Clone)]
-struct Rectangle {
-    width: u32,
-    height: u32,
+            let results = vec![
+                InlineQueryResult::Article(google_search),
+                InlineQueryResult::Article(ddg_search),
+            ];
+
+            // Send it off! One thing to note -- the ID we use here must be of the query
+            // we're responding to.
+            let response = bot.answer_inline_query(&q.id, results).send().await;
+            if let Err(err) = response {
+                log::error!("Error in handler: {:?}", err);
+            }
+            respond(())
+        },
+    ));
+
+    Dispatcher::builder(bot, handler).enable_ctrlc_handler().build().dispatch().await;
+    //Command::repl(bot, answer).await;
 }
 
-impl Rectangle {
-    fn area(&self) -> u32{
-        self.width * self.height
-    }
+#[derive(BotCommands, Clone)]
+#[command(rename_rule = "lowercase", description = "These commands are supported:")]
+enum Command {
+    #[command(description = "display this text.")]
+    Help,
+    #[command(description = "handle a username.")]
+    Username(String),
+    #[command(description = "handle a username and an age.", parse_with = "split")]
+    UsernameAndAge { username: String, age: u8 },
+    #[command(description = "return a test button.")]
+    Navigation,
 
-    fn can_hold(&self, other: &Rectangle) -> bool{
-        self.width > other.width && self.height > other.height
-    }
+}
 
-    fn square(size: u32) -> Rectangle{
-        Rectangle{
-            width: size,
-            height: size,
+async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
+
+    println!("{}", msg.chat.id);
+
+
+    match cmd {
+        Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
+        Command::Username(username) => {
+            bot.send_message(msg.chat.id, format!("Your username is @{username}.")).await?
         }
-    }
-}
-
-
-fn main() {
-
-    let rec = Rectangle{
-        width: 30,
-        height:50,
+        Command::UsernameAndAge { username, age } => {
+            bot.send_message(msg.chat.id, format!("Your username is @{username} and age is {age}."))
+                .await?
+        }
+        Command::Navigation => {
+            bot.send_message(msg.chat.id, "This is a fast navigation.")
+            .reply_markup(
+                InlineKeyboardMarkup::default()
+                .append_row(vec![
+                    InlineKeyboardButton{ 
+                        text: String::from("Pay"), 
+                        kind: InlineKeyboardButtonKind::SwitchInlineQueryCurrentChat(String::from("ClubCurrentChat"))
+                    }
+                ])
+                .append_row(vec![
+                    InlineKeyboardButton{ 
+                        text: String::from("Club0"), 
+                        kind: InlineKeyboardButtonKind::SwitchInlineQuery(String::from("Club0"))
+                    },
+                    InlineKeyboardButton{ 
+                        text: String::from("Green Sea"), 
+                        kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+                    },
+                    InlineKeyboardButton{ 
+                        text: String::from("Forward"), 
+                        kind: InlineKeyboardButtonKind::SwitchInlineQuery(String::from("Club1"))
+                    },
+                ])
+            ).await?
+        }
     };
 
-    rec.area();
-    rec.can_hold(&rec.clone());
-
-    let (tx, rx) = mpsc::channel();
-
-    let s = thread::spawn(move || {
-        let val = String::from("hi");
-        tx.send(val).unwrap();
-    });
-
-    rx.try_recv().unwrap();
-
-    let rect = Rectangle{
-        width: 30,
-        height:50,
-    };
-
-    test::hosting::t();
-
-    let mut arr = vec![1,2,3,4,5];
-    let mut arr2 = vec![1,2,3,4,5];
-    let mut arr3 = vec![1,2,3,4,5];
-
-    arr.push(1);
-    arr.reserve(1024);
-    arr.shrink_to_fit();
-    arr.resize(512, 0);
-    arr.append(&mut arr2);
-
-    arr.capacity();
-    arr.clear();
-    arr.is_empty();
-    let x = arr.clamp(arr2, arr3);
-
-    let w = Box::new(1);
-    let w2 = w.clone();
-
-
-    println!("{:#?}", rect);
-
-    let num = 1;
-
-    let a = match num {
-        1 => 1,
-        _ => 0
-    };
-
-}
-
-fn first_word(s: &str) -> &str {
-
-    let bytes = s.as_bytes();
-
-    for (i, &char) in bytes.iter().enumerate(){
-        if char == b' '{
-            return &s[..i];
-        }
-    }
-    &s[..]
-}
-
-use std::fmt::Display;
-
-pub fn judge<'a>(x: &'a str, y: &'a str) -> &'a str {
-    x
-}
-
-
-
-#[derive(Debug, Clone)]
-pub struct tex_2d {
-    width : u32,
-    height : u32,
-}
-
-pub struct tex_3d {
-    width : u32,
-    height : u32,
-    depth : u32,
-}
-
-pub struct tex_cube {
-    faces : [tex_2d; 6],
-}
-
-impl tex_cube {
-    pub fn new(width : u32, heigt : u32) -> tex_cube {
-        tex_cube {
-            faces : [
-                tex_2d{ width : width, height : heigt },
-                tex_2d{ width : width, height : heigt },
-                tex_2d{ width : width, height : heigt },
-                tex_2d{ width : width, height : heigt },
-                tex_2d{ width : width, height : heigt },
-                tex_2d{ width : width, height : heigt },
-                ],
-        }
-    }
-}
-
-pub struct tex_rect {
-    width : u32,
-    height : u32,
-}
-
-
-
-struct Pair<T> {
-    x : T,
-    y : T
-}
-
-impl<T> Pair<T> {
-    fn new () {}
-}
-
-impl<T: Display + PartialOrd> Pair<T> {
-    fn cmp_display(&self) {
-        if self.x >= self.y {
-            println!("x is larger than y");
-        } else {
-            println!("x is smaller than y");
-        }
-    }
+    Ok(())
 }

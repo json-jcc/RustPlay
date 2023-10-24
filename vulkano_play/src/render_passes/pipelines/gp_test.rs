@@ -26,7 +26,7 @@ use vulkano::{
             depth_stencil::DepthStencilState, color_blend::ColorBlendState,
         }, 
         GraphicsPipeline
-    }, image::SampleCount
+    }, image::SampleCount, buffer::Subbuffer
 };
 
 use vulkano::pipeline::graphics::vertex_input::Vertex;
@@ -72,6 +72,18 @@ mod fs {
 pub struct Vert {
     #[format(R32G32_SFLOAT)]
     pub position: [f32; 2],
+}
+
+pub struct Resources {
+
+    vbo: Subbuffer<[Vert]>,
+    ebo: Subbuffer<[u32]>,
+
+    
+}
+
+impl Resources {
+    
 }
 
 pub fn create(
