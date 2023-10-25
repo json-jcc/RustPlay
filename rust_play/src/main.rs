@@ -1,12 +1,10 @@
 use teloxide::{
     prelude::*, 
     utils::command::BotCommands, 
-    types::*, payloads::GetChat,
+    types::*
 };
 
 use std::env;
-
-use reqwest::*;
 
 #[tokio::main]
 async fn main() {
@@ -18,59 +16,24 @@ async fn main() {
 
     let bot = Bot::from_env();
 
-    let filter_channel_post_handler = Update::filter_channel_post().branch(
-        dptree::endpoint(|bot: Bot, q: Message| async move {
-            
-            // let chat = bot.get_chat(q.chat.id).send().await.unwrap();
-
-            // q.chat.bio();
-            // q.chat.description();
-            // q.chat.first_name();
-            // q.chat.last_name();
-            // q.chat.username();
-            // q.chat.title();
-
-            println!("channel post {} {}" , q.text().unwrap(), q.chat.title().unwrap());
-
-            respond(())
-        })
-    );
-
     let filter_message_handler = Update::filter_message().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
-            println!("message {} {}" , q.text().unwrap(), q.chat.title().unwrap());
 
-            respond(())
-        })
-    );
+            if q.text().unwrap_or("") == "醋鸡" {
+                bot.delete_message(q.chat.id, q.id).await.unwrap();
+                let new_message = bot.send_message(q.chat.id, "狠狠滴醋鸡").await.unwrap();
+                bot.pin_chat_message(q.chat.id, new_message.id).await.unwrap();
 
-    let filter_inline_query_handler = Update::filter_inline_query().branch(
-        dptree::endpoint(|bot: Bot, q: InlineQuery| async move {
-            println!("inline query {}" , q.query);
+                //bot.send_message(q.chat.id, "狠狠滴醋鸡").reply_markup().await.unwrap();
+                //bot.set_my_commands(vec![Command::Help, Command::Username, Command::UsernameAndAge, Command::Navigation]).await.unwrap();
+            }
 
-            respond(())
-        })
-    );
+            let full_name = match q.from() {
+                Some(user) => user.full_name(),
+                None => String::from("")
+            };
 
-    let filter_callback_query_handler = Update::filter_callback_query().branch(
-        dptree::endpoint(|bot: Bot, q: CallbackQuery| async move {
-            println!("callback query");
-
-            respond(())
-        })
-    );
-
-    let filter_chosen_inline_result_handler = Update::filter_chosen_inline_result().branch(
-        dptree::endpoint(|bot: Bot, q: ChosenInlineResult| async move {
-            println!("chosen inline result");
-
-            respond(())
-        })
-    );
-
-    let filter_edited_channel_post_handler = Update::filter_edited_channel_post().branch(
-        dptree::endpoint(|bot: Bot, q: Message| async move {
-            println!("edited channel post");
+            println!("group '{}' message '{}' from '{}'" , q.chat.title().unwrap_or(""), q.text().unwrap_or(""), full_name);
 
             respond(())
         })
@@ -84,17 +47,88 @@ async fn main() {
         })
     );
 
-    let filter_poll_handler = Update::filter_poll().branch(
-        dptree::endpoint(|bot: Bot, q: Poll| async move {
-            println!("poll");
+    let filter_channel_post_handler = Update::filter_channel_post().branch(
+        dptree::endpoint(|bot: Bot, q: Message| async move {
+            println!("channel post {} {}" , q.text().unwrap_or(""), q.chat.title().unwrap_or(""));
+            respond(())
+        })
+    );
+
+    let filter_edited_channel_post_handler = Update::filter_edited_channel_post().branch(
+        dptree::endpoint(|bot: Bot, q: Message| async move {
+            println!("edited channel post");
 
             respond(())
         })
     );
 
-    let filter_pre_checkout_query_handler = Update::filter_pre_checkout_query().branch(
-        dptree::endpoint(|bot: Bot, q: PreCheckoutQuery| async move {
-            println!("pre checkout query");
+    let filter_inline_query_handler = Update::filter_inline_query().branch(dptree::endpoint(
+            |bot: Bot, q: InlineQuery| async move {
+                // First, create your actual response
+                let google_search = InlineQueryResultArticle::new(
+                    // Each item needs a unique ID, as well as the response container for the
+                    // items. These can be whatever, as long as they don't
+                    // conflict.
+                    "01".to_string(),
+                    // What the user will actually see
+                    "Google Search",
+                    // What message will be sent when clicked/tapped
+                    InputMessageContent::Text(InputMessageContentText::new(format!(
+                        "https://www.google.com/search?q={}",
+                        q.query,
+                    ))),
+                );
+                // While constructing them from the struct itself is possible, it is preferred
+                // to use the builder pattern if you wish to add more
+                // information to your result. Please refer to the documentation
+                // for more detailed information about each field. https://docs.rs/teloxide/latest/teloxide/types/struct.InlineQueryResultArticle.html
+                let ddg_search = InlineQueryResultArticle::new(
+                    "02".to_string(),
+                    "DuckDuckGo Search".to_string(),
+                    InputMessageContent::Text(InputMessageContentText::new(format!(
+                        "https://duckduckgo.com/?q={}",
+                        q.query
+                    ))),
+                )
+                .description("DuckDuckGo Search")
+                .thumb_url("https://duckduckgo.com/assets/logo_header.v108.png".parse().unwrap())
+                .url("https://duckduckgo.com/about".parse().unwrap()); // Note: This is the url that will open if they click the thumbnail
+    
+
+                let contact = InlineQueryResultContact::new(
+                    "03".to_string(),
+                    "1234567890".to_string(),
+                    "John".to_string(),
+                )
+                .thumb_url("https://duckduckgo.com/assets/logo_header.v108.png".parse().unwrap());
+
+                let results = vec![
+                    InlineQueryResult::Article(google_search),
+                    InlineQueryResult::Article(ddg_search),
+                    InlineQueryResult::Contact(contact)
+                ];
+    
+                // Send it off! One thing to note -- the ID we use here must be of the query
+                // we're responding to.
+                let response = bot.answer_inline_query(&q.id, results).send().await;
+                if let Err(err) = response {
+                    log::error!("Error in handler: {:?}", err);
+                }
+                respond(())
+            },
+        ));
+
+    let filter_chosen_inline_result_handler = Update::filter_chosen_inline_result().branch(
+        dptree::endpoint(|bot: Bot, q: ChosenInlineResult| async move {
+            println!("chosen inline result");
+
+            respond(())
+        })
+    );
+
+    let filter_callback_query_handler = Update::filter_callback_query().branch(
+        dptree::endpoint(|bot: Bot, q: CallbackQuery| async move {
+            println!("callback query");
 
             respond(())
         })
@@ -108,70 +142,76 @@ async fn main() {
         })
     );
 
-    Dispatcher::builder(bot.clone(), filter_edited_channel_post_handler)
-        .enable_ctrlc_handler().build()
-        .dispatch().await;
+    let filter_pre_checkout_query_handler = Update::filter_pre_checkout_query().branch(
+        dptree::endpoint(|bot: Bot, q: PreCheckoutQuery| async move {
+            println!("pre checkout query");
 
-    // Dispatcher::builder(bot.clone(), filter_channel_post_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_message_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_inline_query_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_callback_query_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_chosen_inline_result_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_edited_message_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_poll_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_pre_checkout_query_handler).enable_ctrlc_handler().build().dispatch().await;
-    // Dispatcher::builder(bot.clone(), filter_shipping_query_handler).enable_ctrlc_handler().build().dispatch().await;
+            respond(())
+        })
+    );
+
+    let filter_poll_handler = Update::filter_poll().branch(
+        dptree::endpoint(|bot: Bot, q: Poll| async move {
+            println!("poll");
+
+            respond(())
+        })
+    );
+
+    let filter_poll_answer_handler = Update::filter_poll_answer().branch(
+        dptree::endpoint(|bot: Bot, q: PollAnswer| async move {
+            println!("poll answer");
+
+            respond(())
+        })
+    );
+
+    let filter_my_chat_member_handler = Update::filter_my_chat_member().branch(
+        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+            println!("my chat member");
+
+            respond(())
+        })
+    );
+
+    let filter_chat_member_handler = Update::filter_chat_member().branch(
+        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+            println!("chat member");
+
+            respond(())
+        })
+    );
+
+    let filter_chat_join_request_handler = Update::filter_chat_join_request().branch(
+        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+            println!("chat join request");
+
+            respond(())
+        })
+    );
 
 
-    // let handler = Update::filter_inline_query().branch(dptree::endpoint(
-    //     |bot: Bot, q: InlineQuery| async move {
-    //         // First, create your actual response
-    //         let google_search = InlineQueryResultArticle::new(
-    //             // Each item needs a unique ID, as well as the response container for the
-    //             // items. These can be whatever, as long as they don't
-    //             // conflict.
-    //             "01".to_string(),
-    //             // What the user will actually see
-    //             "Google Search",
-    //             // What message will be sent when clicked/tapped
-    //             InputMessageContent::Text(InputMessageContentText::new(format!(
-    //                 "https://www.google.com/search?q={}",
-    //                 q.query,
-    //             ))),
-    //         );
-    //         // While constructing them from the struct itself is possible, it is preferred
-    //         // to use the builder pattern if you wish to add more
-    //         // information to your result. Please refer to the documentation
-    //         // for more detailed information about each field. https://docs.rs/teloxide/latest/teloxide/types/struct.InlineQueryResultArticle.html
-    //         let ddg_search = InlineQueryResultArticle::new(
-    //             "02".to_string(),
-    //             "DuckDuckGo Search".to_string(),
-    //             InputMessageContent::Text(InputMessageContentText::new(format!(
-    //                 "https://duckduckgo.com/?q={}",
-    //                 q.query
-    //             ))),
-    //         )
-    //         .description("DuckDuckGo Search")
-    //         .thumb_url("https://duckduckgo.com/assets/logo_header.v108.png".parse().unwrap())
-    //         .url("https://duckduckgo.com/about".parse().unwrap()); // Note: This is the url that will open if they click the thumbnail
+    let handler = dptree::entry()
+        .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
+        .branch(filter_message_handler) //
+        .branch(filter_edited_message_handler) // 
+        .branch(filter_channel_post_handler) //
+        .branch(filter_edited_channel_post_handler) //
+        .branch(filter_inline_query_handler) //
+        .branch(filter_chosen_inline_result_handler) 
+        .branch(filter_callback_query_handler) 
+        .branch(filter_shipping_query_handler) 
+        .branch(filter_pre_checkout_query_handler) 
+        .branch(filter_poll_handler) 
+        .branch(filter_poll_answer_handler) 
+        .branch(filter_my_chat_member_handler) 
+        .branch(filter_chat_member_handler) 
+        .branch(filter_chat_join_request_handler);
+        
+    Dispatcher::builder(bot.clone(), handler).enable_ctrlc_handler().build().dispatch().await;
 
-    //         let results = vec![
-    //             InlineQueryResult::Article(google_search),
-    //             InlineQueryResult::Article(ddg_search),
-    //         ];
+    
 
-    //         // Send it off! One thing to note -- the ID we use here must be of the query
-    //         // we're responding to.
-    //         let response = bot.answer_inline_query(&q.id, results).send().await;
-    //         if let Err(err) = response {
-    //             log::error!("Error in handler: {:?}", err);
-    //         }
-    //         respond(())
-    //     },
-    // ));
-
-    // Dispatcher::builder(bot, handler).enable_ctrlc_handler().build().dispatch().await;
-    //Command::repl(bot, answer).await;
 }
 
 #[derive(BotCommands, Clone)]
@@ -185,13 +225,14 @@ enum Command {
     UsernameAndAge { username: String, age: u8 },
     #[command(description = "return a test button.")]
     Navigation,
+}
 
+async fn message_resp() -> ResponseResult<()> {
+    Ok(())
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
-
-    println!("{}", msg.chat.id);
-
+    println!("handle command {}", msg.chat.id);
 
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
