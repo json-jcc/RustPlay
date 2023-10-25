@@ -18,16 +18,40 @@ async fn main() {
 
     let filter_message_handler = Update::filter_message().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
+            
+            println!("message {}", q.text().unwrap_or(""));
 
             if q.text().unwrap_or("") == "醋鸡" {
                 bot.delete_message(q.chat.id, q.id).await.unwrap();
-                let new_message = bot.send_message(q.chat.id, "狠狠滴醋鸡").await.unwrap();
+                
+                let new_message = bot.send_message(q.chat.id, "醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡")
+                .reply_markup(
+                    InlineKeyboardMarkup::default()
+                    .append_row(vec![
+                        InlineKeyboardButton{ 
+                            text: String::from("浦东新区"), 
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+W4Yki78fMccyM2Y1").unwrap())
+                        }
+                    ])
+                    .append_row(vec![
+                        InlineKeyboardButton{
+                            text: String::from("碧之海 崂山路"),
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+                        },
+                        InlineKeyboardButton{
+                            text: String::from("虹之间 沪南路"),
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+                        }
+                    ])
+                    .append_row(vec![
+                        InlineKeyboardButton{
+                            text: String::from("心愿养生 五莲路"),
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+                        }
+                    ])
+                ).await.unwrap();
+                
                 bot.pin_chat_message(q.chat.id, new_message.id).await.unwrap();
-
-
-                // bot.send_message(q.chat.id, "狠狠滴醋鸡")
-                // .reply_markup(InlineKeyboardButton)
-                //bot.set_my_commands(vec![Command::Help, Command::Username, Command::UsernameAndAge, Command::Navigation]).await.unwrap();
             }
 
             let full_name = match q.from() {
@@ -51,15 +75,102 @@ async fn main() {
 
     let filter_channel_post_handler = Update::filter_channel_post().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
-            
-            // match q.kind {
-            //     MessageKind::Common(msg) {
-            //         let a = msg.from();
-            //     },
-            //     _ => {}
-            // };
+            //println!("channel post {} {}" , q.caption().unwrap_or(""), q.chat.title().unwrap_or(""));
 
-            println!("channel post {} {}" , q.caption().unwrap_or(""), q.chat.title().unwrap_or(""));
+
+            if q.chat.title().unwrap_or("") == "醋鸡导航总览" {
+                
+                if q.text().unwrap_or("") == "醋鸡" {
+                    bot.unpin_all_chat_messages(q.chat.id).await.unwrap();
+                    bot.delete_message(q.chat.id, q.id).await.unwrap();
+
+                    let outer_good_link_buttons = vec![
+                        InlineKeyboardButton{ 
+                            text: String::from("上海修车指南总群"), 
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/shanghaisinan").unwrap())
+                        },
+                        InlineKeyboardButton{
+                            text: String::from("上海修车师傅"),
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/fjjjnc").unwrap())
+                        },
+                        InlineKeyboardButton{
+                            text: String::from("沪上天堂"),
+                            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/YYDSHsTtPPcB").unwrap())
+                        }
+                    ];
+
+                    let mut outer_good_link_markup = InlineKeyboardMarkup::default();
+                    
+                    outer_good_link_buttons.iter().for_each(|x| {
+                        let outer_good_link_markup_ref = &mut outer_good_link_markup;
+                        outer_good_link_markup_ref.append_row(vec![x.clone()]);
+                    });
+
+                    
+                    let new_message = bot.send_message(q.chat.id, "外部群 醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡")
+                    .reply_markup(
+                        outer_good_link_markup
+                        // InlineKeyboardMarkup::default()
+                        // .append_row(vec![
+                        //     InlineKeyboardButton{ 
+                        //         text: String::from("上海修车指南总群"), 
+                        //         kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/shanghaisinan").unwrap())
+                        //     }
+                        // ])
+                        // .append_row(vec![
+                        //     InlineKeyboardButton{
+                        //         text: String::from("上海修车师傅"),
+                        //         kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/fjjjnc").unwrap())
+                        //     }
+                        // ])
+                        // .append_row(vec![
+                        //     InlineKeyboardButton{
+                        //         text: String::from("沪上天堂"),
+                        //         kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/YYDSHsTtPPcB").unwrap())
+                        //     }
+                        // ])
+                    ).await.unwrap();
+                    
+                    bot.pin_chat_message(q.chat.id, new_message.id).await.unwrap();
+                }
+            }
+
+
+            // if q.text().unwrap_or("") == "醋鸡" {
+
+            //     bot.unpin_all_chat_messages(q.chat.id).await.unwrap();
+            //     bot.delete_message(q.chat.id, q.id).await.unwrap();
+                    
+            //         let new_message = bot.send_message(q.chat.id, "醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡")
+            //         .reply_markup(
+            //             InlineKeyboardMarkup::default()
+            //             .append_row(vec![
+            //                 InlineKeyboardButton{ 
+            //                     text: String::from("浦东新区"), 
+            //                     kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+W4Yki78fMccyM2Y1").unwrap())
+            //                 }
+            //             ])
+            //             .append_row(vec![
+            //                 InlineKeyboardButton{
+            //                     text: String::from("碧之海 崂山路"),
+            //                     kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+            //                 },
+            //                 InlineKeyboardButton{
+            //                     text: String::from("虹之间 沪南路"),
+            //                     kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+            //                 }
+            //             ])
+            //             .append_row(vec![
+            //                 InlineKeyboardButton{
+            //                     text: String::from("心愿养生 五莲路"),
+            //                     kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+            //                 }
+            //             ])
+            //         ).await.unwrap();
+                    
+            //         bot.pin_chat_message(q.chat.id, new_message.id).await.unwrap();
+            // }
+
             respond(())
         })
     );
