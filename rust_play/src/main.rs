@@ -4,7 +4,7 @@ use teloxide::{
     types::*
 };
 
-use std::env;
+use std::{env, collections::HashMap};
 
 #[tokio::main]
 async fn main() {
@@ -24,7 +24,9 @@ async fn main() {
                 let new_message = bot.send_message(q.chat.id, "狠狠滴醋鸡").await.unwrap();
                 bot.pin_chat_message(q.chat.id, new_message.id).await.unwrap();
 
-                //bot.send_message(q.chat.id, "狠狠滴醋鸡").reply_markup().await.unwrap();
+
+                // bot.send_message(q.chat.id, "狠狠滴醋鸡")
+                // .reply_markup(InlineKeyboardButton)
                 //bot.set_my_commands(vec![Command::Help, Command::Username, Command::UsernameAndAge, Command::Navigation]).await.unwrap();
             }
 
@@ -49,7 +51,15 @@ async fn main() {
 
     let filter_channel_post_handler = Update::filter_channel_post().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
-            println!("channel post {} {}" , q.text().unwrap_or(""), q.chat.title().unwrap_or(""));
+            
+            // match q.kind {
+            //     MessageKind::Common(msg) {
+            //         let a = msg.from();
+            //     },
+            //     _ => {}
+            // };
+
+            println!("channel post {} {}" , q.caption().unwrap_or(""), q.chat.title().unwrap_or(""));
             respond(())
         })
     );
@@ -64,6 +74,11 @@ async fn main() {
 
     let filter_inline_query_handler = Update::filter_inline_query().branch(dptree::endpoint(
             |bot: Bot, q: InlineQuery| async move {
+                
+                if q.query != "Nav" {
+                    return respond(());
+                }
+
                 // First, create your actual response
                 let google_search = InlineQueryResultArticle::new(
                     // Each item needs a unique ID, as well as the response container for the
@@ -107,6 +122,20 @@ async fn main() {
                     InlineQueryResult::Article(ddg_search),
                     InlineQueryResult::Contact(contact)
                 ];
+
+                // let maps = HashMap::new();
+
+                // maps.insert("Shanghai", vec![
+                //     InlineQueryResult::Article(google_search),
+                //     InlineQueryResult::Article(ddg_search),
+                //     InlineQueryResult::Contact(contact)
+                // ]);
+
+                // maps.insert("Shanghai-Xuhui", vec![
+                //     InlineQueryResult::Article(google_search),
+                //     InlineQueryResult::Article(ddg_search),
+                //     InlineQueryResult::Contact(contact)
+                // ]);
     
                 // Send it off! One thing to note -- the ID we use here must be of the query
                 // we're responding to.
@@ -191,27 +220,25 @@ async fn main() {
     );
 
 
-    let handler = dptree::entry()
-        .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
-        .branch(filter_message_handler) //
-        .branch(filter_edited_message_handler) // 
-        .branch(filter_channel_post_handler) //
-        .branch(filter_edited_channel_post_handler) //
-        .branch(filter_inline_query_handler) //
-        .branch(filter_chosen_inline_result_handler) 
-        .branch(filter_callback_query_handler) 
-        .branch(filter_shipping_query_handler) 
-        .branch(filter_pre_checkout_query_handler) 
-        .branch(filter_poll_handler) 
-        .branch(filter_poll_answer_handler) 
-        .branch(filter_my_chat_member_handler) 
-        .branch(filter_chat_member_handler) 
-        .branch(filter_chat_join_request_handler);
-        
-    Dispatcher::builder(bot.clone(), handler).enable_ctrlc_handler().build().dispatch().await;
+    let mut dispatcher = Dispatcher::builder(bot.clone(), dptree::entry()
+    .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
+    .branch(filter_message_handler) //
+    .branch(filter_edited_message_handler) // 
+    .branch(filter_channel_post_handler) //
+    .branch(filter_edited_channel_post_handler) //
+    .branch(filter_inline_query_handler) //
+    .branch(filter_chosen_inline_result_handler) 
+    .branch(filter_callback_query_handler) 
+    .branch(filter_shipping_query_handler) 
+    .branch(filter_pre_checkout_query_handler) 
+    .branch(filter_poll_handler) 
+    .branch(filter_poll_answer_handler) 
+    .branch(filter_my_chat_member_handler) 
+    .branch(filter_chat_member_handler) 
+    .branch(filter_chat_join_request_handler))
+    .enable_ctrlc_handler().build();
 
-    
-
+    dispatcher.dispatch().await;
 }
 
 #[derive(BotCommands, Clone)]
@@ -250,23 +277,23 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
                 .append_row(vec![
                     InlineKeyboardButton{ 
                         text: String::from("Pay"), 
-                        kind: InlineKeyboardButtonKind::SwitchInlineQueryCurrentChat(String::from("ClubCurrentChat"))
+                        kind: InlineKeyboardButtonKind::Pay(True)
                     }
                 ])
-                .append_row(vec![
-                    InlineKeyboardButton{ 
-                        text: String::from("Club0"), 
-                        kind: InlineKeyboardButtonKind::SwitchInlineQuery(String::from("Club0"))
-                    },
-                    InlineKeyboardButton{ 
-                        text: String::from("Green Sea"), 
-                        kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
-                    },
-                    InlineKeyboardButton{ 
-                        text: String::from("Forward"), 
-                        kind: InlineKeyboardButtonKind::SwitchInlineQuery(String::from("Club1"))
-                    },
-                ])
+                // .append_row(vec![
+                //     InlineKeyboardButton{ 
+                //         text: String::from("Club0"), 
+                //         kind: InlineKeyboardButtonKind::SwitchInlineQuery(String::from("Club0"))
+                //     },
+                //     InlineKeyboardButton{ 
+                //         text: String::from("Green Sea"), 
+                //         kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
+                //     },
+                //     InlineKeyboardButton{ 
+                //         text: String::from("Forward"), 
+                //         kind: InlineKeyboardButtonKind::SwitchInlineQuery(String::from("Club1"))
+                //     },
+                // ])
             ).await?
         }
     };
