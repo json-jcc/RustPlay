@@ -20,12 +20,9 @@ enum TuiYouLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TuiYouInfo {
-    name: String,
-    road: String,
-    level: TuiYouLevel,
-    price: i32,
-    link: reqwest::Url,
     district: String,
+    name: String,
+    link: String,
 }
 
 fn send_admission_ticket_invoice<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::JsonRequest<teloxide::payloads::SendInvoice> 
@@ -46,9 +43,9 @@ where Ch: Into<Recipient> {
                 ]))
 }
 
-fn send_outer_links_message<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::JsonRequest<teloxide::payloads::SendMessage>
+fn send_outer_links_message<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>
 where Ch: Into<Recipient> {
-    bot.send_message(chat_id, "外部群 醋鸡醋鸡醋鸡醋鸡醋鸡醋鸡")
+    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("C:\\Users\\Regicide Ji\\Pictures\\2.jpg")))
     .reply_markup(InlineKeyboardMarkup::new(vec![
         vec![
             InlineKeyboardButton{ 
@@ -71,31 +68,31 @@ where Ch: Into<Recipient> {
     ]))
 }
 
-fn send_ty_links_message<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>
-where Ch: Into<Recipient> {
+fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>>
+{
+    let paths = fs::read_dir("E:/PrivateRepos/RustPlay/rust_play/database/").unwrap();
+    let mut infos = vec![];
+    
+    paths.into_iter().for_each(|path| {
+        let path = path.unwrap();
+        let json = fs::read_to_string(path.path()).unwrap();
 
-    let json = fs::read_to_string("C:\\Users\\jichengcheng\\Desktop\\image.png").unwrap_or("".to_string());
+        let mut sub_infos = serde_json::from_str::<Vec<TuiYouInfo>>(json.as_str()).unwrap_or_default();
+        infos.append(&mut sub_infos);
+    });
     
     let mut mapped_infos = HashMap::new();
-    let infos = serde_json::from_str::<Vec<TuiYouInfo>>(json.as_str()).unwrap();
     
     infos.iter().for_each(|info| {
         if !mapped_infos.contains_key(&info.district) {
-            mapped_infos.insert(info.district.clone(), Vec::new());
+            mapped_infos.insert(info.district.clone(), vec![info.clone()]);
         } else { 
             mapped_infos.get_mut(&info.district).unwrap().push(info.clone());
         }
     });
 
-    let mut rows = <Vec<Vec<InlineKeyboardButton>>>::new();
-    
-    mapped_infos.iter().for_each(|(district, infos)| {
-        let title_row = vec![InlineKeyboardButton{ 
-            text: district.clone(), 
-            kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+W4Yki78fMccyM2Y1").unwrap())
-        }];
-
-        rows.push(title_row);
+    mapped_infos.iter().map(|(district, infos)| {
+        let mut rows = <Vec<Vec<InlineKeyboardButton>>>::new();
 
         let mut row = Vec::new();
         let mut i = 0;
@@ -105,47 +102,25 @@ where Ch: Into<Recipient> {
                 row = Vec::new();
                 row.push(InlineKeyboardButton{
                     text: info.name.clone(),
-                    kind: InlineKeyboardButtonKind::Url(info.link.clone())
+                    kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse(&info.link).unwrap())
                 });
                 i = i + 1;
             } else if i == 1 {
                 row.push(InlineKeyboardButton{
                     text: info.name.clone(),
-                    kind: InlineKeyboardButtonKind::Url(info.link.clone())
+                    kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse(&info.link).unwrap())
                 });
-                rows.push(row.clone());
                 i = 0;
+                rows.push(row.clone());
             }
         });
-    });
-    
 
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("C:\\Users\\jichengcheng\\Desktop\\image.png")))
-    .reply_markup(
-        InlineKeyboardMarkup::default()
-        .append_row(vec![
-            InlineKeyboardButton{ 
-                text: String::from("浦东新区"), 
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+W4Yki78fMccyM2Y1").unwrap())
-            }
-        ])
-        .append_row(vec![
-            InlineKeyboardButton{
-                text: String::from("碧之海 崂山路"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
-            },
-            InlineKeyboardButton{
-                text: String::from("虹之间 沪南路"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
-            }
-        ])
-        .append_row(vec![
-            InlineKeyboardButton{
-                text: String::from("心愿养生 五莲路"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/ljzty9999").unwrap())
-            }
-        ])
-    )
+        rows.push(row.clone());
+
+        bot.send_photo(chat_id, InputFile::file(std::path::Path::new("C:\\Users\\Regicide Ji\\Pictures\\2.jpg")))
+            .caption(district.as_str())
+            .reply_markup(InlineKeyboardMarkup::new(rows))
+    }).collect()
 }
 
 fn get_nav_query_result(bot: Bot, q: InlineQuery) -> teloxide::requests::JsonRequest<teloxide::payloads::AnswerInlineQuery> {
@@ -210,8 +185,6 @@ async fn main() {
 
             if q.text().unwrap_or("") == "醋鸡" {
                 bot.delete_message(q.chat.id, q.id).await.unwrap();
-                let new_message = send_ty_links_message(bot.clone(), q.chat.id).await.unwrap();
-                bot.pin_chat_message(q.chat.id, new_message.id).await.unwrap();
             }
 
             let full_name = match q.from() {
@@ -234,12 +207,13 @@ async fn main() {
 
     let filter_channel_post_handler = Update::filter_channel_post().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
-            if q.chat.title().unwrap_or("") == "醋鸡导航总览" && q.text().unwrap_or("") == "醋鸡" {
-                let chat_id = q.chat.id;
-                bot.delete_message(chat_id, q.id).await.unwrap();
-                //send_admission_ticket_invoice(bot.clone(), chat_id).await.unwrap();
-                send_outer_links_message(bot.clone(), chat_id).await.unwrap();
-                send_ty_links_message(bot.clone(), chat_id).await.unwrap();
+            if q.chat.title().unwrap_or("") == "醋鸡导航（上海）" && q.text().unwrap_or("") == "醋鸡" {
+                bot.delete_message(q.chat.id, q.id).await.unwrap();
+                send_outer_links_message(bot.clone(), q.chat.id).await.unwrap();
+                
+                for rq in send_ty_links_message(bot.clone(), q.chat.id.clone()) {
+                    rq.await.unwrap();
+                }
             }
             respond(())
         })
