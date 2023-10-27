@@ -4,13 +4,18 @@ use teloxide::{
     types::*,
     requests::{Requester, ResponseResult},
 };
+use tokio::join;
 
-use std::{env, collections::HashMap, fs};
+use std::{env, collections::HashMap, fs, path::Path};
 use serde_json;
 use serde::{Serialize, Deserialize};
+use timer::Timer;
+
 
 const TELOXIDE_TOKEN: &str = "6402266107:AAFSAZN2r1fxJRrvvCw4wexI1b9wKJwOYgM";
 const PROVIDER_TOKEN: &str = "5322214758:TEST:afdd97df-8d23-47a4-87d2-06fb2f285595";
+const CHANNEL_TOTAL_CHAT_ID: ChatId = ChatId(-1002057929576); // https://github.com/GabrielRF/telegram-id#app-channel-id
+
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 enum TuiYouLevel {
@@ -45,7 +50,7 @@ where Ch: Into<Recipient> {
 
 fn send_outer_links_message<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>
 where Ch: Into<Recipient> {
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("C:\\Users\\Regicide Ji\\Pictures\\2.jpg")))
+    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
     .reply_markup(InlineKeyboardMarkup::new(vec![
         vec![
             InlineKeyboardButton{ 
@@ -70,7 +75,8 @@ where Ch: Into<Recipient> {
 
 fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>>
 {
-    let paths = fs::read_dir("E:/PrivateRepos/RustPlay/rust_play/database/").unwrap();
+    let dir = Path::new("database/ty/");
+    let paths = fs::read_dir(dir).unwrap();
     let mut infos = vec![];
     
     paths.into_iter().for_each(|path| {
@@ -117,7 +123,7 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
 
         rows.push(row.clone());
 
-        bot.send_photo(chat_id, InputFile::file(std::path::Path::new("C:\\Users\\Regicide Ji\\Pictures\\2.jpg")))
+        bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg")))
             .caption(district.as_str())
             .reply_markup(InlineKeyboardMarkup::new(rows))
     }).collect()
@@ -170,13 +176,65 @@ fn get_nav_query_result(bot: Bot, q: InlineQuery) -> teloxide::requests::JsonReq
     bot.answer_inline_query(&q.id, results)
 }
 
+fn send_sub_channels(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
+    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+    .reply_markup(InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton{ 
+                text: String::from("醋鸡导航（上海）"), 
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+L59NF2B-wdo5MmRl").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（深圳）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+TarGf934aL4yMzM1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（广州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+rHe_VspU3kwxMTM1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（南京）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+j4x9suReBeI0YTVl").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（合肥）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XflyABk3gR82ZWQ1").unwrap())
+            }
+        ]
+    ]))
+}
+
+fn send_return_to_top_channel(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
+    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+    .reply_markup(InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton{ 
+                text: String::from("醋鸡导航总览"), 
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+gfOT7qEet-RkNWZl").unwrap())
+            }
+        ]
+    ]))
+}
+
 #[tokio::main]
 async fn main() {
-
     env::set_var("TELOXIDE_TOKEN", TELOXIDE_TOKEN);
 
     pretty_env_logger::init();
     let bot = Bot::from_env();
+
+    bot.get_updates().await.unwrap().iter().for_each(|update|{
+    });
+
+    bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头已上线。").await.unwrap();
 
     let filter_message_handler = Update::filter_message().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
@@ -207,14 +265,23 @@ async fn main() {
 
     let filter_channel_post_handler = Update::filter_channel_post().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
-            if q.chat.title().unwrap_or("") == "醋鸡导航（上海）" && q.text().unwrap_or("") == "醋鸡" {
+            println!("chat id {}", q.chat.id);
+            if q.text().unwrap_or("") == "醋鸡" {
                 bot.delete_message(q.chat.id, q.id).await.unwrap();
-                send_outer_links_message(bot.clone(), q.chat.id).await.unwrap();
-                
-                for rq in send_ty_links_message(bot.clone(), q.chat.id.clone()) {
-                    rq.await.unwrap();
+
+                if q.chat.title().unwrap_or("") == "醋鸡导航总览" {
+                    send_sub_channels(bot.clone(), q.chat.id).await.unwrap();
+                }
+    
+                if q.chat.title().unwrap_or("") == "醋鸡导航（上海）" {
+                    send_outer_links_message(bot.clone(), q.chat.id).await.unwrap();
+                    for rq in send_ty_links_message(bot.clone(), q.chat.id.clone()) {
+                        rq.await.unwrap();
+                    }
+                    send_return_to_top_channel(bot.clone(), q.chat.id).await.unwrap();
                 }
             }
+
             respond(())
         })
     );
@@ -317,25 +384,40 @@ async fn main() {
         })
     );
 
-    let mut dispatcher = Dispatcher::builder(bot.clone(), dptree::entry()
-    .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
-    .branch(filter_message_handler) //
-    .branch(filter_edited_message_handler) // 
-    .branch(filter_channel_post_handler) //
-    .branch(filter_edited_channel_post_handler) //
-    .branch(filter_inline_query_handler) //
-    .branch(filter_chosen_inline_result_handler) 
-    .branch(filter_callback_query_handler) 
-    .branch(filter_shipping_query_handler) 
-    .branch(filter_pre_checkout_query_handler) 
-    .branch(filter_poll_handler) 
-    .branch(filter_poll_answer_handler) 
-    .branch(filter_my_chat_member_handler) 
-    .branch(filter_chat_member_handler) 
-    .branch(filter_chat_join_request_handler))
+    let mut dispatcher = Dispatcher::builder(
+        bot.clone(), 
+        dptree::entry()
+        .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
+        .branch(filter_message_handler) //
+        .branch(filter_edited_message_handler) // 
+        .branch(filter_channel_post_handler) //
+        .branch(filter_edited_channel_post_handler) //
+        .branch(filter_inline_query_handler) //
+        .branch(filter_chosen_inline_result_handler) 
+        .branch(filter_callback_query_handler) 
+        .branch(filter_shipping_query_handler) 
+        .branch(filter_pre_checkout_query_handler) 
+        .branch(filter_poll_handler) 
+        .branch(filter_poll_answer_handler) 
+        .branch(filter_my_chat_member_handler) 
+        .branch(filter_chat_member_handler) 
+        .branch(filter_chat_join_request_handler)
+    )
     .enable_ctrlc_handler().build();
 
+    // let timer = Timer::new();
+
+    // let bot_x = bot.clone();
+    // timer.schedule_repeating(chrono::Duration::milliseconds(5000), move || {
+    //     {
+    //        sceduled_events(bot_x.clone()).await;
+    //     }
+    // });
+
     dispatcher.dispatch().await;
+    //let a = join!(dispatcher.dispatch(), sceduled_events(bot.clone()));
+
+    bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头已下线。").await.unwrap();
 }
 
 #[derive(BotCommands, Clone)]
@@ -345,6 +427,10 @@ enum Command {
     Help,
     #[command(description = "return a test button.")]
     NavApp,
+}
+
+async fn sceduled_events(bot: Bot) {
+    bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头 PPPP。").await.unwrap();
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
