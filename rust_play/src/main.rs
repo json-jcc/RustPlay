@@ -13,7 +13,7 @@ use std::{
 };
 use serde::{Serialize, Deserialize};
 use chrono::{Utc, Duration};
-use tokio::spawn;
+use tokio::{spawn, join};
 use tokio_schedule::{every, Job};
 
 
@@ -240,10 +240,6 @@ fn get_top_channel() -> ChatId {
     CHANNEL_TOTAL_CHAT_ID
 }
 
-// fn get_second_channels() -> Vec<ChatId> {
-//     vec![]
-// }
-
 #[tokio::main]
 async fn main() {
     
@@ -271,11 +267,12 @@ enum Command {
     Help,
     #[command(description = "return a test button.")]
     NavApp,
+    #[command(description = "SelfDestruct.")]
+    Clear,
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
-    println!("handle command {}", msg.chat.id);
-
+    //println!("handle command {}", msg.chat.id);
     match cmd {
         Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
         Command::NavApp => {
@@ -293,6 +290,21 @@ async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
                     }
                 ])
             ).await?
+        },
+        Command::Clear => {
+            let start = bot.send_message(msg.chat.id, "正在自爆...").await?;
+            let mut msg_id = start.id.0;
+            while msg_id >= 0 {
+
+                //bot.delete_message(msg.chat.id, MessageId(msg_id)).await.unwrap();
+                match bot.delete_message(msg.chat.id, MessageId(msg_id)).await {
+                    Ok(_) => {},
+                    Err(_) => {}
+                };
+                msg_id = msg_id - 1;
+            }
+
+            bot.send_message(msg.chat.id, "自爆完成").await?
         }
     };
 
@@ -452,6 +464,7 @@ async fn filter() {
 
     Dispatcher::builder( bot.clone(), dptree::entry()
         .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
+        .branch(Update::filter_channel_post().filter_command::<Command>().endpoint(answer))
         .branch(filter_message_handler) //
         .branch(filter_edited_message_handler) // 
         .branch(filter_channel_post_handler) //
