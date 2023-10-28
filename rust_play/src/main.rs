@@ -4,17 +4,32 @@ use teloxide::{
     types::*,
     requests::{Requester, ResponseResult},
 };
-use tokio::join;
 
-use std::{env, collections::HashMap, fs, path::Path};
+use std::{env, collections::HashMap, fs, path::Path, sync::Arc};
 use serde_json;
 use serde::{Serialize, Deserialize};
+use chrono::{Utc, Duration, Weekday};
 use timer::Timer;
+use tokio::spawn;
+use tokio_schedule::{every, Job};
 
 
 const TELOXIDE_TOKEN: &str = "6402266107:AAFSAZN2r1fxJRrvvCw4wexI1b9wKJwOYgM";
 const PROVIDER_TOKEN: &str = "5322214758:TEST:afdd97df-8d23-47a4-87d2-06fb2f285595";
 const CHANNEL_TOTAL_CHAT_ID: ChatId = ChatId(-1002057929576); // https://github.com/GabrielRF/telegram-id#app-channel-id
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ChannelAnchor {
+    chat_id: ChatId,
+    level: String,
+    name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OutsideLink {
+    name: String,
+    link: String,
+}
 
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -30,8 +45,7 @@ struct TuiYouInfo {
     link: String,
 }
 
-fn send_admission_ticket_invoice<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::JsonRequest<teloxide::payloads::SendInvoice> 
-where Ch: Into<Recipient> {
+fn send_admission_ticket_invoice(bot: Bot, chat_id: ChatId) -> teloxide::requests::JsonRequest<teloxide::payloads::SendInvoice> {
     bot.send_invoice(chat_id, "入场券", "一次购买终身入场", "aaaa", 
                 PROVIDER_TOKEN, 
                 "CNY", vec![
@@ -48,33 +62,26 @@ where Ch: Into<Recipient> {
                 ]))
 }
 
-fn send_outer_links_message<Ch>(bot: Bot, chat_id: Ch) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>
-where Ch: Into<Recipient> {
+fn send_outer_links_message(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
+    
+    let json = fs::read_to_string("database/outside_links.json").unwrap();
+    let outside_links = serde_json::from_str::<Vec<OutsideLink>>(json.as_str()).unwrap_or_default();
+
+    let mut rows = <Vec<Vec<InlineKeyboardButton>>>::new();
+    outside_links.iter().for_each(|link| {
+        rows.push(vec![
+            InlineKeyboardButton{
+                text: link.name.clone(),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse(&link.link).unwrap())
+            }
+        ]);
+    });
+
     bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
-    .reply_markup(InlineKeyboardMarkup::new(vec![
-        vec![
-            InlineKeyboardButton{ 
-                text: String::from("上海修车指南总群"), 
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/shanghaisinan").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("上海修车师傅"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/fjjjnc").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("沪上天堂"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/YYDSHsTtPPcB").unwrap())
-            }
-        ]
-    ]))
+    .reply_markup(InlineKeyboardMarkup::new(rows))
 }
 
-fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>>
-{
+fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>> {
     let dir = Path::new("database/ty/");
     let paths = fs::read_dir(dir).unwrap();
     let mut infos = vec![];
@@ -239,18 +246,9 @@ async fn main() {
     let filter_message_handler = Update::filter_message().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
             
-            println!("message {}", q.text().unwrap_or(""));
-
             if q.text().unwrap_or("") == "醋鸡" {
                 bot.delete_message(q.chat.id, q.id).await.unwrap();
             }
-
-            let full_name = match q.from() {
-                Some(user) => user.full_name(),
-                None => String::from("")
-            };
-
-            println!("group '{}' message '{}' from '{}'" , q.chat.title().unwrap_or(""), q.text().unwrap_or(""), full_name);
 
             respond(())
         })
@@ -265,7 +263,6 @@ async fn main() {
 
     let filter_channel_post_handler = Update::filter_channel_post().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
-            println!("chat id {}", q.chat.id);
             if q.text().unwrap_or("") == "醋鸡" {
                 bot.delete_message(q.chat.id, q.id).await.unwrap();
 
@@ -281,7 +278,6 @@ async fn main() {
                     send_return_to_top_channel(bot.clone(), q.chat.id).await.unwrap();
                 }
             }
-
             respond(())
         })
     );
@@ -405,20 +401,19 @@ async fn main() {
     )
     .enable_ctrlc_handler().build();
 
-    // let timer = Timer::new();
-
-    // let bot_x = bot.clone();
-    // timer.schedule_repeating(chrono::Duration::milliseconds(5000), move || {
-    //     {
-    //        sceduled_events(bot_x.clone()).await;
-    //     }
-    // });
+    let every_second_1_day = every(1).hour().until(&(Utc::now() + Duration::days(1)))
+        .in_timezone(&Utc)
+        .perform(|| async { 
+            let bot = Bot::from_env();
+            bot.send_message(CHANNEL_TOTAL_CHAT_ID, format!("醋鸡火车头 1h 定时播报测试 {}。", Utc::now())).await.unwrap();
+        });
+    spawn(every_second_1_day);
 
     dispatcher.dispatch().await;
-    //let a = join!(dispatcher.dispatch(), sceduled_events(bot.clone()));
 
     bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头已下线。").await.unwrap();
 }
+
 
 #[derive(BotCommands, Clone)]
 #[command(rename_rule = "lowercase", description = "These commands are supported:")]
@@ -427,10 +422,6 @@ enum Command {
     Help,
     #[command(description = "return a test button.")]
     NavApp,
-}
-
-async fn sceduled_events(bot: Bot) {
-    bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头 PPPP。").await.unwrap();
 }
 
 async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
