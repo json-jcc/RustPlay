@@ -131,7 +131,9 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
             }
         });
 
-        rows.push(row.clone());
+        if i == 1 {
+            rows.push(row.clone());
+        }
 
         bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg")))
             .caption(district.as_str())
@@ -234,17 +236,81 @@ fn send_return_to_top_channel(bot: Bot, chat_id: ChatId) -> teloxide::requests::
     ]))
 }
 
+fn get_top_channel() -> ChatId {
+    CHANNEL_TOTAL_CHAT_ID
+}
+
+// fn get_second_channels() -> Vec<ChatId> {
+//     vec![]
+// }
+
 #[tokio::main]
 async fn main() {
+    
     env::set_var("TELOXIDE_TOKEN", TELOXIDE_TOKEN);
 
     pretty_env_logger::init();
+    
+    // set the schedule events
+    schedule();
+
     let bot = Bot::from_env();
+    bot.send_message(get_top_channel(), "醋鸡火车头已上线。").await.unwrap();
 
-    // bot.get_updates().await.unwrap().iter().for_each(|update|{
-    // });
+    // set the filter events and poll
+    filter().await;
 
-    bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头已上线。").await.unwrap();
+    bot.send_message(get_top_channel(), "醋鸡火车头已下线。").await.unwrap();
+}
+
+
+#[derive(BotCommands, Clone)]
+#[command(rename_rule = "lowercase", description = "These commands are supported:")]
+enum Command {
+    #[command(description = "display this text.")]
+    Help,
+    #[command(description = "return a test button.")]
+    NavApp,
+}
+
+async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
+    println!("handle command {}", msg.chat.id);
+
+    match cmd {
+        Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
+        Command::NavApp => {
+            bot.send_message(msg.chat.id, "This is a fast navigation.")
+            .reply_markup(
+                InlineKeyboardMarkup::default()
+                .append_row(vec![
+                    InlineKeyboardButton{ 
+                        text: String::from("Baidu"), 
+                        kind: InlineKeyboardButtonKind::WebApp(WebAppInfo { url: reqwest::Url::parse("https://www.baidu.com").unwrap() })
+                    },
+                    InlineKeyboardButton{
+                        text: String::from("Google"), 
+                        kind: InlineKeyboardButtonKind::WebApp(WebAppInfo { url: reqwest::Url::parse("https://www.google.com").unwrap() })
+                    }
+                ])
+            ).await?
+        }
+    };
+
+    Ok(())
+}
+
+fn schedule() {
+    let every_second_1_day = every(1).hour().until(&(Utc::now() + Duration::days(1)))
+        .in_timezone(&Utc)
+        .perform(|| async { 
+            let bot = Bot::from_env();
+            bot.send_message(CHANNEL_TOTAL_CHAT_ID, format!("醋鸡火车头 1h 定时播报测试 {}。", Utc::now())).await.unwrap();
+        });
+    spawn(every_second_1_day);
+}
+
+async fn filter() {
+    let bot = Bot::from_env();
 
     let filter_message_handler = Update::filter_message().branch(
         dptree::endpoint(|bot: Bot, q: Message| async move {
@@ -384,9 +450,7 @@ async fn main() {
         })
     );
 
-    let mut dispatcher = Dispatcher::builder(
-        bot.clone(), 
-        dptree::entry()
+    Dispatcher::builder( bot.clone(), dptree::entry()
         .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
         .branch(filter_message_handler) //
         .branch(filter_edited_message_handler) // 
@@ -403,53 +467,6 @@ async fn main() {
         .branch(filter_chat_member_handler) 
         .branch(filter_chat_join_request_handler)
     )
-    .enable_ctrlc_handler().build();
-
-    let every_second_1_day = every(1).hour().until(&(Utc::now() + Duration::days(1)))
-        .in_timezone(&Utc)
-        .perform(|| async { 
-            let bot = Bot::from_env();
-            bot.send_message(CHANNEL_TOTAL_CHAT_ID, format!("醋鸡火车头 1h 定时播报测试 {}。", Utc::now())).await.unwrap();
-        });
-    spawn(every_second_1_day);
-
-    dispatcher.dispatch().await;
-
-    bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头已下线。").await.unwrap();
-}
-
-
-#[derive(BotCommands, Clone)]
-#[command(rename_rule = "lowercase", description = "These commands are supported:")]
-enum Command {
-    #[command(description = "display this text.")]
-    Help,
-    #[command(description = "return a test button.")]
-    NavApp,
-}
-
-async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
-    println!("handle command {}", msg.chat.id);
-
-    match cmd {
-        Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
-        Command::NavApp => {
-            bot.send_message(msg.chat.id, "This is a fast navigation.")
-            .reply_markup(
-                InlineKeyboardMarkup::default()
-                .append_row(vec![
-                    InlineKeyboardButton{ 
-                        text: String::from("Baidu"), 
-                        kind: InlineKeyboardButtonKind::WebApp(WebAppInfo { url: reqwest::Url::parse("https://www.baidu.com").unwrap() })
-                    },
-                    InlineKeyboardButton{
-                        text: String::from("Google"), 
-                        kind: InlineKeyboardButtonKind::WebApp(WebAppInfo { url: reqwest::Url::parse("https://www.google.com").unwrap() })
-                    }
-                ])
-            ).await?
-        }
-    };
-
-    Ok(())
+    .enable_ctrlc_handler().build()
+    .dispatch().await;
 }
