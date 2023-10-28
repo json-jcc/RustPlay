@@ -5,11 +5,14 @@ use teloxide::{
     requests::{Requester, ResponseResult},
 };
 
-use std::{env, collections::HashMap, fs, path::Path, sync::Arc};
-use serde_json;
+use std::{
+    env, 
+    collections::HashMap, 
+    fs, 
+    path::Path
+};
 use serde::{Serialize, Deserialize};
-use chrono::{Utc, Duration, Weekday};
-use timer::Timer;
+use chrono::{Utc, Duration};
 use tokio::spawn;
 use tokio_schedule::{every, Job};
 
@@ -238,8 +241,8 @@ async fn main() {
     pretty_env_logger::init();
     let bot = Bot::from_env();
 
-    bot.get_updates().await.unwrap().iter().for_each(|update|{
-    });
+    // bot.get_updates().await.unwrap().iter().for_each(|update|{
+    // });
 
     bot.send_message(CHANNEL_TOTAL_CHAT_ID, "醋鸡火车头已上线。").await.unwrap();
 
@@ -248,6 +251,7 @@ async fn main() {
             
             if q.text().unwrap_or("") == "醋鸡" {
                 bot.delete_message(q.chat.id, q.id).await.unwrap();
+                send_admission_ticket_invoice(bot, q.chat.id).await.unwrap();
             }
 
             respond(())
@@ -255,7 +259,7 @@ async fn main() {
     );
 
     let filter_edited_message_handler = Update::filter_edited_message().branch(
-        dptree::endpoint(|bot: Bot, q: Message| async move {
+        dptree::endpoint(|_bot: Bot, _q: Message| async move {
             println!("edited message");
             respond(())
         })
@@ -283,7 +287,7 @@ async fn main() {
     );
 
     let filter_edited_channel_post_handler = Update::filter_edited_channel_post().branch(
-        dptree::endpoint(|bot: Bot, q: Message| async move {
+        dptree::endpoint(|_bot: Bot, _q: Message| async move {
             println!("edited channel post");
             respond(())
         })
@@ -309,7 +313,7 @@ async fn main() {
 
     // 当选中任意一个查询结果
     let filter_chosen_inline_result_handler = Update::filter_chosen_inline_result().branch(
-        dptree::endpoint(|bot: Bot, q: ChosenInlineResult| async move {
+        dptree::endpoint(|_bot: Bot, _q: ChosenInlineResult| async move {
             println!("chosen inline result");
 
             respond(())
@@ -317,7 +321,7 @@ async fn main() {
     );
 
     let filter_callback_query_handler = Update::filter_callback_query().branch(
-        dptree::endpoint(|bot: Bot, q: CallbackQuery| async move {
+        dptree::endpoint(|_bot: Bot, _q: CallbackQuery| async move {
             println!("callback query");
 
             respond(())
@@ -325,7 +329,7 @@ async fn main() {
     );
 
     let filter_shipping_query_handler = Update::filter_shipping_query().branch(
-        dptree::endpoint(|bot: Bot, q: ShippingQuery| async move {
+        dptree::endpoint(|_bot: Bot, _q: ShippingQuery| async move {
             println!("shipping query");
 
             respond(())
@@ -333,7 +337,7 @@ async fn main() {
     );
 
     let filter_pre_checkout_query_handler = Update::filter_pre_checkout_query().branch(
-        dptree::endpoint(|bot: Bot, q: PreCheckoutQuery| async move {
+        dptree::endpoint(|_bot: Bot, _q: PreCheckoutQuery| async move {
             println!("pre checkout query");
 
             respond(())
@@ -341,7 +345,7 @@ async fn main() {
     );
 
     let filter_poll_handler = Update::filter_poll().branch(
-        dptree::endpoint(|bot: Bot, q: Poll| async move {
+        dptree::endpoint(|_bot: Bot, _q: Poll| async move {
             println!("poll");
 
             respond(())
@@ -349,7 +353,7 @@ async fn main() {
     );
 
     let filter_poll_answer_handler = Update::filter_poll_answer().branch(
-        dptree::endpoint(|bot: Bot, q: PollAnswer| async move {
+        dptree::endpoint(|_bot: Bot, _q: PollAnswer| async move {
             println!("poll answer");
 
             respond(())
@@ -357,7 +361,7 @@ async fn main() {
     );
 
     let filter_my_chat_member_handler = Update::filter_my_chat_member().branch(
-        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+        dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
             println!("my chat member");
 
             respond(())
@@ -365,7 +369,7 @@ async fn main() {
     );
 
     let filter_chat_member_handler = Update::filter_chat_member().branch(
-        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+        dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
             println!("chat member");
 
             respond(())
@@ -373,7 +377,7 @@ async fn main() {
     );
 
     let filter_chat_join_request_handler = Update::filter_chat_join_request().branch(
-        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+        dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
             println!("chat join request");
 
             respond(())
