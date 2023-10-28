@@ -99,7 +99,11 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
     
     let mut mapped_infos = HashMap::new();
     
-    infos.iter().for_each(|info| {
+    infos.iter_mut().for_each(|info| {
+        if info.link.is_empty() {
+            info.link = String::from("https://www.baidu.com/");
+        }
+
         if !mapped_infos.contains_key(&info.district) {
             mapped_infos.insert(info.district.clone(), vec![info.clone()]);
         } else { 
