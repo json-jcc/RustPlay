@@ -66,7 +66,6 @@ impl CujiNav {
 }
 
 
-
 fn send_admission_ticket_invoice(bot: Bot, chat_id: ChatId) -> teloxide::requests::JsonRequest<teloxide::payloads::SendInvoice> {
     bot.send_invoice(chat_id, "入场券", "一次购买终身入场", "aaaa", 
                 PROVIDER_TOKEN, 
@@ -84,7 +83,7 @@ fn send_admission_ticket_invoice(bot: Bot, chat_id: ChatId) -> teloxide::request
                 ]))
 }
 
-fn send_outer_links_message(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
+async fn send_outer_links_message(bot: Bot, chat_id: ChatId) {
 
     let json = fs::read_to_string("database/outside_links.json").unwrap();
     let outside_links = serde_json::from_str::<Vec<OutsideLink>>(json.as_str()).unwrap_or_default();
@@ -100,10 +99,71 @@ fn send_outer_links_message(bot: Bot, chat_id: ChatId) -> teloxide::requests::Mu
     });
 
     bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
-    .reply_markup(InlineKeyboardMarkup::new(rows))
+    .caption(String::from("相关优质外部群，醋鸡导航不做任何担保"))
+    .reply_markup(InlineKeyboardMarkup::new(rows)).await.unwrap();
 }
 
-fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>> {
+async fn send_sub_channels(bot: Bot, chat_id: ChatId) {
+    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+    .reply_markup(InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton{ 
+                text: String::from("醋鸡导航（上海）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+L59NF2B-wdo5MmRl").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（苏州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XbKr47pnlU0xYTM1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（杭州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+xeE69f0A1fM1M2I1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（南京）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+j4x9suReBeI0YTVl").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（合肥）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XflyABk3gR82ZWQ1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（深圳）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+TarGf934aL4yMzM1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（广州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+rHe_VspU3kwxMTM1").unwrap())
+            }
+        ]
+    ])).await.unwrap();
+}
+
+async fn send_return_to_top_channel(bot: Bot, chat_id: ChatId) {
+    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+    .reply_markup(InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton{ 
+                text: String::from("醋鸡导航总览"), 
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+gfOT7qEet-RkNWZl").unwrap())
+            }
+        ]
+    ])).await.unwrap();
+}
+
+async fn send_ty_links_message(bot: Bot, chat_id: ChatId) {
     let dir = Path::new("database/ty/");
     let paths = fs::read_dir(dir).unwrap();
     let mut infos = vec![];
@@ -129,7 +189,7 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
         }
     });
 
-    mapped_infos.iter().map(|(district, infos)| {
+    let requets: Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>> = mapped_infos.iter().map(|(district, infos)| {
         let mut rows = <Vec<Vec<InlineKeyboardButton>>>::new();
 
         let mut row = Vec::new();
@@ -160,7 +220,11 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
         bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg")))
             .caption(district.as_str())
             .reply_markup(InlineKeyboardMarkup::new(rows))
-    }).collect()
+    }).collect();
+
+    for rq in  requets {
+        rq.await.unwrap();
+    }
 }
 
 fn get_nav_query_result(bot: Bot, q: InlineQuery) -> teloxide::requests::JsonRequest<teloxide::payloads::AnswerInlineQuery> {
@@ -210,65 +274,6 @@ fn get_nav_query_result(bot: Bot, q: InlineQuery) -> teloxide::requests::JsonReq
     bot.answer_inline_query(&q.id, results)
 }
 
-fn send_sub_channels(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
-    .reply_markup(InlineKeyboardMarkup::new(vec![
-        vec![
-            InlineKeyboardButton{ 
-                text: String::from("醋鸡导航（上海）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+L59NF2B-wdo5MmRl").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("醋鸡导航（苏州）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XbKr47pnlU0xYTM1").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("醋鸡导航（杭州）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+xeE69f0A1fM1M2I1").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("醋鸡导航（南京）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+j4x9suReBeI0YTVl").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("醋鸡导航（合肥）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XflyABk3gR82ZWQ1").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("醋鸡导航（深圳）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+TarGf934aL4yMzM1").unwrap())
-            }
-        ],
-        vec![
-            InlineKeyboardButton{
-                text: String::from("醋鸡导航（广州）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+rHe_VspU3kwxMTM1").unwrap())
-            }
-        ]
-    ]))
-}
-
-fn send_return_to_top_channel(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
-    .reply_markup(InlineKeyboardMarkup::new(vec![
-        vec![
-            InlineKeyboardButton{ 
-                text: String::from("醋鸡导航总览"), 
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+gfOT7qEet-RkNWZl").unwrap())
-            }
-        ]
-    ]))
-}
 
 #[tokio::main]
 async fn main() {
@@ -379,15 +384,15 @@ async fn filter() {
                 bot.delete_message(msg.chat.id, msg.id).await.unwrap();
 
                 if msg.chat.title().unwrap_or("") == "醋鸡导航总览" {
-                    send_sub_channels(bot.clone(), msg.chat.id).await.unwrap();
+                    send_sub_channels(bot.clone(), msg.chat.id).await;
                 }
     
                 if msg.chat.title().unwrap_or("") == "醋鸡导航（上海）" {
-                    send_outer_links_message(bot.clone(), msg.chat.id).await.unwrap();
-                    for rq in send_ty_links_message(bot.clone(), msg.chat.id.clone()) {
-                        rq.await.unwrap();
-                    }
-                    send_return_to_top_channel(bot.clone(), msg.chat.id).await.unwrap();
+                    
+                    send_return_to_top_channel(bot.clone(), msg.chat.id).await;
+                    send_outer_links_message(bot.clone(), msg.chat.id).await;
+                    send_ty_links_message(bot.clone(), msg.chat.id.clone()).await;
+                    send_return_to_top_channel(bot.clone(), msg.chat.id).await;
                 }
             }
 
