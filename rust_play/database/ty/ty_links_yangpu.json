@@ -1,17 +1,32 @@
 [
     {
+        "id": "",
         "district": "杨浦",
-        "name":"怡水兰亭",
-        "link": "https://t.me/yi15618255237"
+        "address": "国定路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"怡水兰亭",
+        "link": "https://t.me/yi15618255237",
+        "certified": false
     },
     {
+        "id": "",
         "district": "杨浦",
-        "name":"伊人阁 国定路",
-        "link": "https://t.me/shasha1238888"
+        "address": "国定路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"伊人阁",
+        "link": "https://t.me/shasha1238888",
+        "certified": false
     },
     {
+        "id": "",
         "district": "杨浦",
-        "name":"9号公馆",
-        "link": ""
+        "address": "",
+        "category":"4T",
+        "prices": "",
+        "nickname":"9号公馆",
+        "link": "",
+        "certified": false
     }
 ]

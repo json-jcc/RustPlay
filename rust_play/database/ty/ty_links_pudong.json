@@ -1,27 +1,122 @@
 [
     {
+        "id": "",
         "district": "浦东",
-        "name":"碧之海 崂山路",
-        "link": "https://t.me/ljzty9999"
+        "address": "崂山路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"碧之海",
+        "link": "https://t.me/ljzty9999",
+        "certified": false
     },
     {
+        "id": "",
         "district": "浦东",
-        "name":"虹之间 沪南路",
-        "link": "https://t.me/ljzty9999"
+        "address": "沪南路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"虹之间",
+        "link": "",
+        "certified": false
     },
     {
+        "id": "",
         "district": "浦东",
-        "name":"浪淘沙公馆",
-        "link": "https://t.me/ljzyy88888"
+        "address": "",
+        "category":"4T",
+        "prices": "",
+        "nickname":"浪淘沙公馆",
+        "link": "https://t.me/ljzyy88888",
+        "certified": false
     },
     {
+        "id": "",
         "district": "浦东",
-        "name":"云沐 杨思",
-        "link": "https://t.me/yyzlj"
+        "address": "杨思",
+        "category":"4T",
+        "prices": "",
+        "nickname":"云沐",
+        "link": "https://t.me/yyzlj",
+        "certified": false
     },
     {
+        "id": "",
         "district": "浦东",
-        "name":"个人居家 周浦",
-        "link": ""
+        "address": "周浦",
+        "category":"4T",
+        "prices": "",
+        "nickname":"个人居家",
+        "link": "",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "五莲路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"星愿养生",
+        "link": "",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "俱进路141号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"夜玫瑰",
+        "link": "https://t.me/xm889977",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "高科西路551号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"奥斯卡",
+        "link": "https://t.me/BB328956",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "沈家弄路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"楼外楼",
+        "link": "https://t.me/ty56899",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "浦东大道2372号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"威尼斯",
+        "link": "https://t.me/yy1008666",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "博山东路",
+        "category":"半4T",
+        "prices": "",
+        "nickname":"月亮湾",
+        "link": "https://t.me/pdylg8888",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "浦东",
+        "address": "芳华路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"雅嫒",
+        "link": "https://t.me/zljsss",
+        "certified": false
     }
 ]

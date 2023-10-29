@@ -1,12 +1,32 @@
 [
     {
+        "id": "",
         "district": "长宁",
-        "name":"梦源阁",
-        "link": "https://t.me/my123haixuan"
+        "address": "水城南路17号万科广场",
+        "category":"海选",
+        "prices": "",
+        "nickname":"梦源阁",
+        "link": "https://t.me/my123haixuan",
+        "certified": false
     },
     {
+        "id": "",
         "district": "长宁",
-        "name":"仙霞 仙霞路",
-        "link": ""
+        "address": "仙霞路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"仙霞",
+        "link": "",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "长宁",
+        "address": "仙霞路460号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"云舒",
+        "link": "",
+        "certified": false
     }
 ]

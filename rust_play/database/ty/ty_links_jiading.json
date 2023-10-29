@@ -1,7 +1,11 @@
 [
     {
+        "id": "",
         "district": "嘉定",
-        "name":"沪上云庭 万镇路",
+        "address": "万镇路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"沪上云庭",
         "link": "https://t.me/jdty111"
     }
 ]

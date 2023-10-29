@@ -9,7 +9,7 @@ use std::{
     env, 
     collections::HashMap, 
     fs, 
-    path::Path
+    path::Path, vec
 };
 use serde::{Serialize, Deserialize};
 use chrono::{Utc, Duration};
@@ -35,18 +35,37 @@ struct OutsideLink {
 }
 
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-enum TuiYouLevel {
-    _2t,    
-    _4t,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TuiYouInfo {
+    id: String,
     district: String,
-    name: String,
+    address: String,
+    category: String,
+    prices: String,
+    nickname: String,
     link: String,
+    certified: bool,
 }
+
+struct CujiNav {
+}
+
+impl CujiNav {
+
+    fn get_top_channel() -> ChatId {
+        CHANNEL_TOTAL_CHAT_ID
+    }
+
+    fn get_city_channels() -> Vec<ChatId> {
+        vec![]
+    }
+
+    fn get_linkd_city_group(id: ChatId) -> ChatId {
+        CHANNEL_TOTAL_CHAT_ID
+    }
+}
+
+
 
 fn send_admission_ticket_invoice(bot: Bot, chat_id: ChatId) -> teloxide::requests::JsonRequest<teloxide::payloads::SendInvoice> {
     bot.send_invoice(chat_id, "入场券", "一次购买终身入场", "aaaa", 
@@ -66,7 +85,7 @@ fn send_admission_ticket_invoice(bot: Bot, chat_id: ChatId) -> teloxide::request
 }
 
 fn send_outer_links_message(bot: Bot, chat_id: ChatId) -> teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto> {
-    
+
     let json = fs::read_to_string("database/outside_links.json").unwrap();
     let outside_links = serde_json::from_str::<Vec<OutsideLink>>(json.as_str()).unwrap_or_default();
 
@@ -101,9 +120,8 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
     
     infos.iter_mut().for_each(|info| {
         if info.link.is_empty() {
-            info.link = String::from("https://www.baidu.com/");
+            info.link = String::from("https://t.me/+L59NF2B-wdo5MmRl");
         }
-
         if !mapped_infos.contains_key(&info.district) {
             mapped_infos.insert(info.district.clone(), vec![info.clone()]);
         } else { 
@@ -121,13 +139,13 @@ fn send_ty_links_message(bot: Bot, chat_id: ChatId) -> Vec<teloxide::requests::M
             if i == 0 {
                 row = Vec::new();
                 row.push(InlineKeyboardButton{
-                    text: info.name.clone(),
+                    text: info.nickname.clone(),
                     kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse(&info.link).unwrap())
                 });
                 i = i + 1;
             } else if i == 1 {
                 row.push(InlineKeyboardButton{
-                    text: info.name.clone(),
+                    text: info.nickname.clone(),
                     kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse(&info.link).unwrap())
                 });
                 i = 0;
@@ -197,20 +215,20 @@ fn send_sub_channels(bot: Bot, chat_id: ChatId) -> teloxide::requests::Multipart
     .reply_markup(InlineKeyboardMarkup::new(vec![
         vec![
             InlineKeyboardButton{ 
-                text: String::from("醋鸡导航（上海）"), 
+                text: String::from("醋鸡导航（上海）"),
                 kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+L59NF2B-wdo5MmRl").unwrap())
             }
         ],
         vec![
             InlineKeyboardButton{
-                text: String::from("醋鸡导航（深圳）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+TarGf934aL4yMzM1").unwrap())
+                text: String::from("醋鸡导航（苏州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XbKr47pnlU0xYTM1").unwrap())
             }
         ],
         vec![
             InlineKeyboardButton{
-                text: String::from("醋鸡导航（广州）"),
-                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+rHe_VspU3kwxMTM1").unwrap())
+                text: String::from("醋鸡导航（杭州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+xeE69f0A1fM1M2I1").unwrap())
             }
         ],
         vec![
@@ -223,6 +241,18 @@ fn send_sub_channels(bot: Bot, chat_id: ChatId) -> teloxide::requests::Multipart
             InlineKeyboardButton{
                 text: String::from("醋鸡导航（合肥）"),
                 kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+XflyABk3gR82ZWQ1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（深圳）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+TarGf934aL4yMzM1").unwrap())
+            }
+        ],
+        vec![
+            InlineKeyboardButton{
+                text: String::from("醋鸡导航（广州）"),
+                kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("https://t.me/+rHe_VspU3kwxMTM1").unwrap())
             }
         ]
     ]))
@@ -240,10 +270,6 @@ fn send_return_to_top_channel(bot: Bot, chat_id: ChatId) -> teloxide::requests::
     ]))
 }
 
-fn get_top_channel() -> ChatId {
-    CHANNEL_TOTAL_CHAT_ID
-}
-
 #[tokio::main]
 async fn main() {
     
@@ -255,12 +281,12 @@ async fn main() {
     schedule();
 
     let bot = Bot::from_env();
-    bot.send_message(get_top_channel(), "醋鸡火车头已上线。").await.unwrap();
+    bot.send_message(CujiNav::get_top_channel(), "醋鸡火车头已上线。").await.unwrap();
 
     // set the filter events and poll
     filter().await;
 
-    bot.send_message(get_top_channel(), "醋鸡火车头已下线。").await.unwrap();
+    bot.send_message(CujiNav::get_top_channel(), "醋鸡火车头已下线。").await.unwrap();
 }
 
 
@@ -348,22 +374,32 @@ async fn filter() {
     );
 
     let filter_channel_post_handler = Update::filter_channel_post().branch(
-        dptree::endpoint(|bot: Bot, q: Message| async move {
-            if q.text().unwrap_or("") == "醋鸡" {
-                bot.delete_message(q.chat.id, q.id).await.unwrap();
+        dptree::endpoint(|bot: Bot, msg: Message| async move {
+            if msg.text().unwrap_or("") == "醋鸡" {
+                bot.delete_message(msg.chat.id, msg.id).await.unwrap();
 
-                if q.chat.title().unwrap_or("") == "醋鸡导航总览" {
-                    send_sub_channels(bot.clone(), q.chat.id).await.unwrap();
+                if msg.chat.title().unwrap_or("") == "醋鸡导航总览" {
+                    send_sub_channels(bot.clone(), msg.chat.id).await.unwrap();
                 }
     
-                if q.chat.title().unwrap_or("") == "醋鸡导航（上海）" {
-                    send_outer_links_message(bot.clone(), q.chat.id).await.unwrap();
-                    for rq in send_ty_links_message(bot.clone(), q.chat.id.clone()) {
+                if msg.chat.title().unwrap_or("") == "醋鸡导航（上海）" {
+                    send_outer_links_message(bot.clone(), msg.chat.id).await.unwrap();
+                    for rq in send_ty_links_message(bot.clone(), msg.chat.id.clone()) {
                         rq.await.unwrap();
                     }
-                    send_return_to_top_channel(bot.clone(), q.chat.id).await.unwrap();
+                    send_return_to_top_channel(bot.clone(), msg.chat.id).await.unwrap();
                 }
             }
+
+            if msg.text().unwrap_or("") == "测试" {
+                bot.send_dice(msg.chat.id).await.unwrap();
+                // let group: Vec<InputMedia> = vec![
+                //     InputMediaPhoto::new(InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+
+                // ];
+                // bot.send_media_group(msg.chat.id,  group);
+            }
+
             respond(())
         })
     );
@@ -375,7 +411,7 @@ async fn filter() {
         })
     );
 
-    // CuJiNavBot
+    // 当有人在chat中 @机器人并写入关键词时
     // 对机器人使用查询关键词
     let filter_inline_query_handler = Update::filter_inline_query().branch(
         dptree::endpoint(
@@ -405,11 +441,11 @@ async fn filter() {
     let filter_callback_query_handler = Update::filter_callback_query().branch(
         dptree::endpoint(|_bot: Bot, _q: CallbackQuery| async move {
             println!("callback query");
-
             respond(())
         })
     );
 
+    // 运输查询，灵活价格时
     let filter_shipping_query_handler = Update::filter_shipping_query().branch(
         dptree::endpoint(|_bot: Bot, _q: ShippingQuery| async move {
             println!("shipping query");
@@ -417,7 +453,8 @@ async fn filter() {
             respond(())
         })
     );
-
+    
+    // 结账前查询
     let filter_pre_checkout_query_handler = Update::filter_pre_checkout_query().branch(
         dptree::endpoint(|_bot: Bot, _q: PreCheckoutQuery| async move {
             println!("pre checkout query");
@@ -425,7 +462,8 @@ async fn filter() {
             respond(())
         })
     );
-
+    
+    // bot 发起投票以及该投票结束
     let filter_poll_handler = Update::filter_poll().branch(
         dptree::endpoint(|_bot: Bot, _q: Poll| async move {
             println!("poll");
@@ -433,7 +471,7 @@ async fn filter() {
             respond(())
         })
     );
-
+    // bot 发起的投票中非匿名模式由用户修改了答案
     let filter_poll_answer_handler = Update::filter_poll_answer().branch(
         dptree::endpoint(|_bot: Bot, _q: PollAnswer| async move {
             println!("poll answer");
@@ -442,6 +480,7 @@ async fn filter() {
         })
     );
 
+    // 当机器人在chat中被拉黑
     let filter_my_chat_member_handler = Update::filter_my_chat_member().branch(
         dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
             println!("my chat member");
@@ -450,18 +489,17 @@ async fn filter() {
         })
     );
 
+    // 当chat中的成员状态发生变化
     let filter_chat_member_handler = Update::filter_chat_member().branch(
         dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
-            println!("chat member");
-
+            println!("chat member updated: {}", _q.from.full_name());
             respond(())
         })
     );
-
+    // 当机器人收到加入请求
     let filter_chat_join_request_handler = Update::filter_chat_join_request().branch(
         dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
-            println!("chat join request");
-
+            println!("chat join request :{}", _q.from.full_name());
             respond(())
         })
     );
@@ -469,17 +507,17 @@ async fn filter() {
     Dispatcher::builder( bot.clone(), dptree::entry()
         .branch(Update::filter_message().filter_command::<Command>().endpoint(answer))
         .branch(Update::filter_channel_post().filter_command::<Command>().endpoint(answer))
-        .branch(filter_message_handler) //
-        .branch(filter_edited_message_handler) // 
+        //.branch(filter_message_handler) //
+        //.branch(filter_edited_message_handler) // 
         .branch(filter_channel_post_handler) //
-        .branch(filter_edited_channel_post_handler) //
+        //.branch(filter_edited_channel_post_handler) //
         .branch(filter_inline_query_handler) //
         .branch(filter_chosen_inline_result_handler) 
         .branch(filter_callback_query_handler) 
         .branch(filter_shipping_query_handler) 
         .branch(filter_pre_checkout_query_handler) 
-        .branch(filter_poll_handler) 
-        .branch(filter_poll_answer_handler) 
+        //.branch(filter_poll_handler) 
+        //.branch(filter_poll_answer_handler) 
         .branch(filter_my_chat_member_handler) 
         .branch(filter_chat_member_handler) 
         .branch(filter_chat_join_request_handler)

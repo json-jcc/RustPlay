@@ -1,12 +1,22 @@
 [
     {
+        "id": "",
         "district": "虹口",
-        "name":"龙庭养生 ",
-        "link": "https://t.me/shanghaiahua"
+        "address": "",
+        "category":"4T",
+        "prices": "",
+        "nickname":"龙庭养生",
+        "link": "https://t.me/shanghaiahua",
+        "certified": false
     },
     {
+        "id": "",
         "district": "虹口",
-        "name":"格瑞斯 外白渡桥",
-        "link": "https://t.me/geruisi"
+        "address": "外白渡桥",
+        "category":"4T",
+        "prices": "",
+        "nickname":"格瑞斯",
+        "link": "https://t.me/geruisi",
+        "certified": false
     }
 ]

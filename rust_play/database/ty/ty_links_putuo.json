@@ -1,47 +1,132 @@
 [
     {
+        "id": "",
         "district": "普陀",
-        "name":"回忆",
-        "link": "https://t.me/moduspa888"
+        "address": "长寿路822弄45支弄1~25号 全家",
+        "category":"4T",
+        "prices": "",
+        "nickname":"回忆",
+        "link": "https://t.me/moduspa888",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"夏洛克",
-        "link": "https://t.me/modu998"
+        "address": "常德路1242号 杨记牛蛙大肠面",
+        "category":"4T",
+        "prices": "",
+        "nickname":"夏洛克",
+        "link": "https://t.me/modu998",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"白金瀚 梅川路店",
-        "link": "https://t.me/ptty88"
+        "address": "梅川路890号 全家",
+        "category":"海选",
+        "prices": "",
+        "nickname":"白金瀚",
+        "link": "https://t.me/ptty88",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"颐 光复西路",
-        "link": "https://t.me/ptty88"
+        "address": "光复西路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"颐",
+        "link": "",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"飞吉 长寿路",
-        "link": "https://t.me/spa_shmd"
+        "address": "长寿路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"飞吉",
+        "link": "https://t.me/spa_shmd",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"兰熏 常德路",
-        "link": ""
+        "address": "常德路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"兰熏",
+        "link": "",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"晴天 长寿路站",
-        "link": ""
+        "address": "长寿路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"晴天",
+        "link": "",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"帝王 江宁路",
-        "link": ""
+        "address": "长寿路街道东新路360号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"后宫",
+        "link": "https://t.me/xw13145200",
+        "certified": false
     },
     {
+        "id": "",
         "district": "普陀",
-        "name":"上海滩 长寿路",
-        "link": "https://t.me/ki52088"
+        "address": "长寿路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"上海滩",
+        "link": "https://t.me/ki52088",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "普陀",
+        "address": "长寿路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"米兰",
+        "link": "https://t.me/mlshspa",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "普陀",
+        "address": "长寿路818弄46号宝康SPA",
+        "category":"4T",
+        "prices": "",
+        "nickname":"星月",
+        "link": "https://t.me/ABCspa0809",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "普陀",
+        "address": "长寿路587号",
+        "category":"海选",
+        "prices": "",
+        "nickname":"御康海选",
+        "link": "https://t.me/ABCspa0809",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "普陀",
+        "address": "长寿路457号 新康汇SPA3楼",
+        "category":"海选",
+        "prices": "",
+        "nickname":" 新康汇",
+        "link": "https://t.me/hhk988",
+        "certified": false
     }
 ]

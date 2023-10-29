@@ -1,62 +1,147 @@
 [
     {
+        "id": "",
         "district": "静安",
-        "name":"高端海选SPA 祥腾财富广场",
-        "link": "https://t.me/jaty888"
+        "address": "祥腾财富广场",
+        "category":"海选",
+        "prices": "",
+        "nickname":"高端海选",
+        "link": "https://t.me/jaty888",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"会 陕北西路",
-        "link": "https://t.me/a89933"
+        "address": "陕北西路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"会",
+        "link": "https://t.me/a89933",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"名流 共和新路",
-        "link": "https://t.me/fc251"
+        "address": "共和新路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"名流",
+        "link": "https://t.me/fc251",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"合悦 余姚路",
-        "link": "https://t.me/thspaty"
+        "address": "余姚路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"合悦",
+        "link": "https://t.me/+YOtwRniMkpRiMzA9",
+        "outer_links": [
+            "https://t.me/thspaty"
+        ],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"凯撒香山",
-        "link": "https://t.me/woshinisun"
+        "address": "新闸路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"凯撒",
+        "link": "https://t.me/woshinisun",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"境韵 宜川路",
-        "link": ""
+        "address": "宜川路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"境韵",
+        "link": "",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"馨瑭 共和新路",
-        "link": "https://t.me/wue2377"
+        "address": "共和新路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"馨瑭",
+        "link": "https://t.me/wue2377",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"九曲 灵石路",
-        "link": "https://t.me/SPA499OK"
+        "address": "灵石路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"九曲",
+        "link": "https://t.me/SPA499OK",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"致享 1244弄",
-        "link": ""
+        "address": "1244弄",
+        "category":"4T",
+        "prices": "",
+        "nickname":"致享",
+        "link": "",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"红墙 共和新路",
-        "link": "https://t.me/KFLM001"
+        "address": "静安共和新路1481红墙创意园",
+        "category":"4T",
+        "prices": "",
+        "nickname":"红墙",
+        "link": "https://t.me/KFLM001",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"云缦 老沪太路",
-        "link": "https://t.me/dhjbdjv"
+        "address": "老沪太路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"云缦",
+        "link": "https://t.me/dhjbdjv",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "静安",
-        "name":"皇家会所 老沪太路",
-        "link": "https://t.me/dhjbdjv"
+        "address": "老沪太路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"皇家会所",
+        "link": "",
+        "outer_links": [""],
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "静安",
+        "address": "陕西北路1155弄之1-7号静安晶华园 言禾养生(玉佛寺店)",
+        "category":"4T",
+        "prices": "",
+        "nickname":"言禾",
+        "link": "https://t.me/tuiyou33",
+        "outer_links": [""],
+        "certified": false
     }
 ]

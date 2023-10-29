@@ -1,37 +1,79 @@
 [
     {
+        "id": "",
         "district": "闵行",
-        "name":"最欢楼 金汇路",
-        "link": "https://t.me/z67886"
+        "address": "金汇路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"最欢楼",
+        "link": "https://t.me/z67886",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "闵行",
-        "name":"韵 韩国街",
-        "link": "https://t.me/z2560"
+        "address": "韩国街",
+        "category":"4T",
+        "prices": "",
+        "nickname":"韵",
+        "link": "https://t.me/z2560",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "闵行",
-        "name":"新极",
-        "link": "https://www.baidu.com/"
+        "address": "",
+        "category":"4T",
+        "prices": "",
+        "nickname":"新极",
+        "link": "",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "闵行",
-        "name":"合喜 红松路",
-        "link": "https://www.baidu.com/"
+        "address": "红松路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"合喜",
+        "link": "",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "闵行",
-        "name":"七喜 疏影路",
-        "link": "https://t.me/baogeli4T"
+        "address": "疏影路713号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"七喜",
+        "link": "https://t.me/baogeli4T",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "闵行",
-        "name":"天上人间 吴中路",
-        "link": "https://t.me/httpsaphu"
+        "address": "吴中路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"天上人间",
+        "link": "https://t.me/httpsaphu",
+        "outer_links": [""],
+        "certified": false
     },
     {
+        "id": "",
         "district": "闵行",
-        "name":"后花园 永跃路",
-        "link": ""
+        "address": "跃路550弄18号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"宝格丽",
+        "link": "",
+        "outer_links": [""],
+        "certified": false
     }
 ]

@@ -1,12 +1,92 @@
 [
     {
+        "id": "",
         "district": "徐汇",
-        "name":"汇银 华山路",
-        "link":"https://t.me/mlptspa"
+        "address": "华山路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"汇银",
+        "link":"https://t.me/mlptspa",
+        "certified": false
     },
     {
+        "id": "",
         "district": "徐汇",
-        "name":"舒悦 斜土路",
-        "link":"https://t.me/SYspa88888"
+        "address": "斜土路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"舒悦",
+        "link":"https://t.me/SYspa88888",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "广元西路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"米兰",
+        "link":"https://t.me/mlshspa",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "桂林路400号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"诺丁汉",
+        "link":"https://t.me/tu88991008",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "青之杰花园",
+        "category":"4T",
+        "prices": "",
+        "nickname":"奥黛",
+        "link":"https://t.me/qaz123321321321",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "斜土路",
+        "category":"4T",
+        "prices": "",
+        "nickname":"华尔街",
+        "link":"https://t.me/ty88661088",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "中山南二路999弄19号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"中山",
+        "link":"https://t.me/yoyou1314",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "漕河泾康健路12号",
+        "category":"4T",
+        "prices": "",
+        "nickname":"爱丁堡",
+        "link":"https://t.me/ttaa666888",
+        "certified": false
+    },
+    {
+        "id": "",
+        "district": "徐汇",
+        "address": "虹桥路610号",
+        "category":"海选",
+        "prices": "",
+        "nickname":"海选",
+        "link":"https://t.me/xhty888",
+        "certified": false
     }
 ]
