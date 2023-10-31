@@ -994,6 +994,7 @@ dependencies = [
  "timer",
  "tokio",
  "tokio_schedule",
+ "url",
 ]
 
 [[package]]

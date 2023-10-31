@@ -16,7 +16,6 @@ use chrono::{Utc, Duration};
 use tokio::{spawn, join};
 use tokio_schedule::{every, Job};
 
-
 const TELOXIDE_TOKEN: &str = "6402266107:AAFSAZN2r1fxJRrvvCw4wexI1b9wKJwOYgM";
 const PROVIDER_TOKEN: &str = "5322214758:TEST:afdd97df-8d23-47a4-87d2-06fb2f285595";
 const CHANNEL_TOTAL_CHAT_ID: ChatId = ChatId(-1002057929576); // https://github.com/GabrielRF/telegram-id#app-channel-id
@@ -46,6 +45,110 @@ struct TuiYouInfo {
     link: String,
     certified: bool,
 }
+
+struct GirlMessage {
+    id: MessageId,
+
+    photo_url : url::Url,
+    caption: String,
+}
+
+struct ShopMessage {
+    id: MessageId,
+    info : TuiYouInfo,
+}
+
+struct ShopChannel {
+    chat_id: ChatId,
+    
+    shop_msg: ShopMessage,
+    girl_msgs: Vec<GirlMessage>,
+}
+
+impl ShopChannel {
+
+    fn new() {
+
+    }
+
+    async fn update_shop_info(&mut self) {
+        // update from db ...
+
+        let bot = Bot::from_env();
+
+        let text = format!("店铺名：{}\n区：{}\n 地址：{}\n 类别：{}\n 价格：{}", 
+            self.shop_msg.info.nickname, 
+            self.shop_msg.info.district, 
+            self.shop_msg.info.address, 
+            self.shop_msg.info.category, 
+            self.shop_msg.info.prices); 
+
+        if self.shop_msg.id.0 == -1 { // means no message yet, send a new one
+            let new_msg = bot.send_message(self.chat_id, text)
+            .reply_markup(InlineKeyboardMarkup::new(vec![vec![
+                InlineKeyboardButton{
+                    text: String::from("回到导航"),
+                    kind: InlineKeyboardButtonKind::Url(reqwest::Url::parse("").unwrap())
+                }
+            ]])).await.unwrap();
+
+            // write into db ...
+            // new_msg.id.0;
+            self.shop_msg.id = new_msg.id;
+        } else { // update the messaage
+            bot.edit_message_text(self.chat_id, self.shop_msg.id, text).await.unwrap();
+        }
+    }
+
+    async fn update_girl_infos(&self) {
+        // update from db ...
+        let bot = Bot::from_env();
+        for msg in &self.girl_msgs {
+            if msg.id.0 == -1 { // means no message yet, send a new one
+                
+                let photo = match url::Url::parse(msg.photo_url.as_str()) {
+                    Ok(url) => InputFile::url(url),
+                    Err(err) => {
+                        println!("error: {}", err);
+                        return
+                    }
+                };
+
+                match bot.send_photo(self.chat_id, photo).caption(&msg.caption).await {
+                    Ok(new_msg) => {
+                        println!("new message id: {}", new_msg.id.0);
+                        // write into db ...
+                        //new_msg.id.0;
+                    },
+                    Err(err) => {
+                        println!("error: {}", err);
+                    }
+                }
+            } else { // update
+                println!("try to update message: {}", msg.id.0);
+                
+                match bot.edit_message_caption(self.chat_id, msg.id).caption(&msg.caption).await {
+                    Ok(msg) => println!("message: {}'s caption updated", msg.id.0),
+                    Err(err) => {
+                        println!("error: {}", err);
+                    }
+                }
+
+                match bot.edit_message_media(self.chat_id, msg.id, 
+                    InputMedia::Photo(InputMediaPhoto::new(
+                        InputFile::url(url::Url::parse(msg.photo_url.as_str()).unwrap())
+                    ))
+                ).await {
+                    Ok(msg) => println!("message: {}'s photo updated", msg.id.0),
+                    Err(err) => {
+                        println!("error: {}", err);
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 struct CujiNav {
 }
@@ -98,13 +201,12 @@ async fn send_outer_links_message(bot: Bot, chat_id: ChatId) {
         ]);
     });
 
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
-    .caption(String::from("相关优质外部群，醋鸡导航不做任何担保"))
+    bot.send_message(chat_id, String::from("-------------------相关优质外部群，醋鸡导航不做任何担保-----------------------"))
     .reply_markup(InlineKeyboardMarkup::new(rows)).await.unwrap();
 }
 
 async fn send_sub_channels(bot: Bot, chat_id: ChatId) {
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+    bot.send_message(chat_id, String::from("---------------------------------------------------------------"))
     .reply_markup(InlineKeyboardMarkup::new(vec![
         vec![
             InlineKeyboardButton{ 
@@ -152,7 +254,7 @@ async fn send_sub_channels(bot: Bot, chat_id: ChatId) {
 }
 
 async fn send_return_to_top_channel(bot: Bot, chat_id: ChatId) {
-    bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+    bot.send_message(chat_id, String::from("---------------------------------------------------------------"))
     .reply_markup(InlineKeyboardMarkup::new(vec![
         vec![
             InlineKeyboardButton{ 
@@ -189,7 +291,7 @@ async fn send_ty_links_message(bot: Bot, chat_id: ChatId) {
         }
     });
 
-    let requets: Vec<teloxide::requests::MultipartRequest<teloxide::payloads::SendPhoto>> = mapped_infos.iter().map(|(district, infos)| {
+    let requets: Vec<teloxide::requests::JsonRequest<teloxide::payloads::SendMessage>> = mapped_infos.iter().map(|(district, infos)| {
         let mut rows = <Vec<Vec<InlineKeyboardButton>>>::new();
 
         let mut row = Vec::new();
@@ -217,8 +319,9 @@ async fn send_ty_links_message(bot: Bot, chat_id: ChatId) {
             rows.push(row.clone());
         }
 
-        bot.send_photo(chat_id, InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg")))
-            .caption(district.as_str())
+        //bot.send_message(chat_id, district.as_str())
+        bot.send_message(chat_id, format!("<b>------------------------{}------------------------</b>", district.as_str()))
+        .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(rows))
     }).collect();
 
@@ -388,7 +491,6 @@ async fn filter() {
                 }
     
                 if msg.chat.title().unwrap_or("") == "醋鸡导航（上海）" {
-                    
                     send_return_to_top_channel(bot.clone(), msg.chat.id).await;
                     send_outer_links_message(bot.clone(), msg.chat.id).await;
                     send_ty_links_message(bot.clone(), msg.chat.id.clone()).await;
@@ -396,13 +498,28 @@ async fn filter() {
                 }
             }
 
-            if msg.text().unwrap_or("") == "测试" {
-                bot.send_dice(msg.chat.id).await.unwrap();
-                // let group: Vec<InputMedia> = vec![
-                //     InputMediaPhoto::new(InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))
+            
 
+            if msg.text().unwrap_or("") == "测试" {
+                // let group: Vec<InputMedia> = vec![
+                //     InputMedia::Photo(InputMediaPhoto::new(InputFile::file(std::path::Path::new("database/pic/FuckYou1.jpg")))),
+                //     InputMedia::Photo(InputMediaPhoto::new(InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg")))),
                 // ];
-                // bot.send_media_group(msg.chat.id,  group);
+                // let x = bot.send_media_group(msg.chat.id, group)
+                // .await.unwrap();
+
+                // //println!("channel post {} {}", msg.chat.id, msg.id);
+                // x.iter().for_each(|msg| { println!("inline message id ? : {}", msg.id)});
+
+
+                bot.edit_message_media(ChatId(-1002002566508), MessageId(17),
+                InputMedia::Photo(InputMediaPhoto::new(InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg"))))).await.unwrap();
+                bot.edit_message_media(ChatId(-1002002566508), MessageId(18), 
+                InputMedia::Photo(InputMediaPhoto::new(InputFile::file(std::path::Path::new("database/pic/FuckYou2.jpg"))))).await.unwrap();
+                bot.edit_message_caption(ChatId(-1002002566508), MessageId(17)).caption("XXXXX").await.unwrap();
+                // bot.edit_message_caption(ChatId(-1002002566508), MessageId(28))
+                // .caption("ccccc")
+                // .await.unwrap();
             }
 
             respond(())
@@ -503,8 +620,11 @@ async fn filter() {
     );
     // 当机器人收到加入请求
     let filter_chat_join_request_handler = Update::filter_chat_join_request().branch(
-        dptree::endpoint(|_bot: Bot, _q: ChatMemberUpdated| async move {
-            println!("chat join request :{}", _q.from.full_name());
+        dptree::endpoint(|bot: Bot, q: ChatMemberUpdated| async move {
+            println!("chat join request :{}", q.from.full_name());
+            bot.approve_chat_join_request(q.chat.id, q.from.id).send().await.unwrap();
+            //bot.close().await;
+            //bot.decline_chat_join_request(q.chat.id, q.from.id).send().await.unwrap();
             respond(())
         })
     );
